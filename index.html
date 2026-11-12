@@ -12,6 +12,8 @@
   <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Space+Grotesk:wght@500;700&family=Tajawal:wght@400;500;700;800&display=swap" rel="stylesheet">
   <!-- Lucide Icons -->
   <script src="https://unpkg.com/lucide@latest"></script>
+  <!-- Supabase JS Client Library -->
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
   <script>
     tailwind.config = {
@@ -54,7 +56,6 @@
       overflow-x: hidden;
     }
 
-    /* Gold Metallic Gradient Text & Surfaces */
     .gold-text-gradient {
       background: linear-gradient(135deg, #FDE68A 0%, #d4af37 50%, #f59e0b 100%);
       -webkit-background-clip: text;
@@ -94,7 +95,6 @@
       box-shadow: 0 12px 32px -10px rgba(212, 175, 55, 0.2);
     }
 
-    /* Subtle Engineering Grid Background */
     .bg-grid-pattern {
       background-size: 42px 42px;
       background-image: 
@@ -102,7 +102,6 @@
         linear-gradient(to bottom, rgba(212, 175, 55, 0.04) 1px, transparent 1px);
     }
 
-    /* Custom Scrollbar */
     ::-webkit-scrollbar {
       width: 7px;
       height: 7px;
@@ -118,7 +117,6 @@
       background: #d4af37;
     }
 
-    /* Animations */
     @keyframes floatSlow {
       0%, 100% { transform: translateY(0px); }
       50% { transform: translateY(-6px); }
@@ -138,30 +136,36 @@
 </head>
 <body class="bg-grid-pattern min-h-screen flex flex-col selection:bg-gold-500 selection:text-obsidian-950">
 
-  <!-- Ambient Top Royal Gold Glow -->
   <div class="fixed top-0 left-1/2 -translate-x-1/2 w-[720px] h-[270px] bg-gold-500/10 blur-[140px] pointer-events-none z-0"></div>
 
-  <!-- Toast Notification Container -->
   <div id="toast-container" class="fixed bottom-5 left-5 z-50 flex flex-col gap-2.5 max-w-sm w-full pointer-events-none"></div>
 
-  <!-- Main Application Root -->
-  <div id="app" class="relative z-10 flex-1 flex flex-col"></div>
+  <div id="app" class="relative z-10 flex-1 flex flex-col">
+    <!-- Loading State while fetching from Supabase -->
+    <div class="flex-1 flex flex-col items-center justify-center p-8 text-center">
+      <div class="w-16 h-16 rounded-full border-4 border-gold-500/20 border-t-gold-500 animate-spin mb-4"></div>
+      <h2 class="text-xl font-bold text-white mb-2">جاري الاتصال بقاعدة بيانات Supabase...</h2>
+      <p class="text-zinc-400 text-sm">يرجى الانتظار قليلاً لتهيئة المنظومة السحابية.</p>
+    </div>
+  </div>
 
-  <!-- Reusable Modal Container -->
   <div id="modal-backdrop" class="fixed inset-0 bg-black/80 backdrop-blur-sm z-40 hidden items-center justify-center p-4 overflow-y-auto">
     <div id="modal-content" class="glass-card rounded-2xl max-w-2xl w-full p-6 md:p-8 border border-gold-500/35 shadow-gold-strong animate-enter relative my-auto"></div>
   </div>
 
-  <!-- Standard Clean Application Script (Global Scope Safe) -->
   <script>
     // ==========================================
-    // 1. CONSTANTS & INITIAL SEED DATA
+    // 1. SUPABASE INITIALIZATION & CONFIG
     // ==========================================
+    const SUPABASE_URL = "https://imljviyftrhbggupjdqh.supabase.co";
+    const SUPABASE_KEY = "sb_publishable_eD657NIdpC3jp0fOkv3Rjw_KrrMruGg";
+    
+    // Initialize Supabase Client
+    const supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
     const ADMIN_ID = "2520734";
     const ADMIN_PASS = "01095088768mma";
-    const STORAGE_KEY = "brainx_team_portal_db_v2";
 
-    // Custom Metallic Gold Brain/Circuit SVG Emblem for BrainX Team
     function getBrainXLogo(size = 46) {
       return `
         <svg width="${size}" height="${size}" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" class="shrink-0">
@@ -176,16 +180,11 @@
               <stop offset="100%" stop-color="#09090b"/>
             </linearGradient>
           </defs>
-          <!-- Outer Hexagonal Tech Shield -->
           <path d="M32 3L57 17.5V46.5L32 61L7 46.5V17.5L32 3Z" fill="url(#bxObsidianGrad)" stroke="url(#bxGoldGrad)" stroke-width="2.5"/>
-          <!-- Inner Circuit Ring -->
           <path d="M32 9L51 20V44L32 55L13 44V20L32 9Z" stroke="url(#bxGoldGrad)" stroke-width="0.9" stroke-opacity="0.45"/>
-          <!-- Brain Hemisphere Circuit Paths -->
           <path d="M29 17C22 17 17 22 17 28.5C17 31.5 18.5 34 20.5 35.5C19 37.5 19.5 41.5 22.5 43.5C25 45 27.5 45 29 44V17Z" stroke="url(#bxGoldGrad)" stroke-width="1.8" stroke-linejoin="round"/>
           <path d="M35 17C42 17 47 22 47 28.5C47 31.5 45.5 34 43.5 35.5C45 37.5 44.5 41.5 41.5 43.5C39 45 36.5 45 35 44V17Z" stroke="url(#bxGoldGrad)" stroke-width="1.8" stroke-linejoin="round"/>
-          <!-- Synaptic X Core -->
           <path d="M22 23L42 41M42 23L22 41" stroke="url(#bxGoldGrad)" stroke-width="3.2" stroke-linecap="round"/>
-          <!-- Neural Nodes -->
           <circle cx="22" cy="23" r="2.3" fill="#FDE68A"/>
           <circle cx="42" cy="23" r="2.3" fill="#FDE68A"/>
           <circle cx="22" cy="41" r="2.3" fill="#f59e0b"/>
@@ -195,7 +194,6 @@
       `;
     }
 
-    // Pre-seeded realistic data stored in localStorage on first run
     const DEFAULT_DB = {
       project: {
         title: "منظومة الروبوت الذكي والتتبع اللحظي (BrainX Autonomous Rover)",
@@ -261,7 +259,6 @@
           ],
           joinedAt: "2026-10-18"
         },
-        // 2 Pending Join Requests for Admin testing
         {
           academicId: "2520881",
           password: "123",
@@ -328,46 +325,49 @@
       ]
     };
 
-    // ==========================================
-    // 2. APPLICATION STATE & LOCALSTORAGE SYNC
-    // ==========================================
-    function loadDB() {
-      try {
-        const raw = localStorage.getItem(STORAGE_KEY);
-        if (raw) {
-          return JSON.parse(raw);
-        }
-      } catch (err) {
-        console.warn("Storage read fallback:", err);
-      }
-      const seeded = JSON.parse(JSON.stringify(DEFAULT_DB));
-      saveDBToStorage(seeded);
-      return seeded;
-    }
-
-    function saveDBToStorage(data) {
-      try {
-        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-      } catch (err) {
-        console.warn("Storage write notice:", err);
-      }
-    }
-
-    let dbState = loadDB();
-    let currentUser = null; // { role: 'admin' | 'member', data: userObj }
+    let dbState = JSON.parse(JSON.stringify(DEFAULT_DB));
+    let currentUser = null;
     let activeTab = "requests";
-    let authTab = "login"; // 'login' | 'join'
-    let memberFilter = "ALL"; // 'ALL' | 'Software' | 'Hardware' | 'Both'
+    let authTab = "login";
+    let memberFilter = "ALL";
     let joinAvatarPreview = "";
 
-    function saveState() {
-      saveDBToStorage(dbState);
+    // Load data from Supabase (Table named 'brainx_store')
+    async function loadDB() {
+      try {
+        const { data, error } = await supabaseClient
+          .from('brainx_store')
+          .select('payload')
+          .eq('id', 1)
+          .single();
+
+        if (data && data.payload) {
+          dbState = data.payload;
+        } else {
+          // If table row doesn't exist yet, insert default seed
+          await supabaseClient.from('brainx_store').upsert({ id: 1, payload: DEFAULT_DB });
+          dbState = JSON.parse(JSON.stringify(DEFAULT_DB));
+        }
+      } catch (err) {
+        console.warn("Supabase fetch notice, falling back to local memory:", err);
+      }
       render();
     }
 
-    // ==========================================
-    // 3. UI HELPERS (Toast, Modals, Badges)
-    // ==========================================
+    // Save data to Supabase
+    async function saveState() {
+      render(); // Immediate UI update
+      try {
+        await supabaseClient.from('brainx_store').upsert({ id: 1, payload: dbState });
+      } catch (err) {
+        console.warn("Supabase sync notice:", err);
+        showToast("تنبيه: تعذر المزامنة السحابية الفورية، تأكد من اتصال الإنترنت.", "warning");
+      }
+    }
+
+    // Initialize App
+    loadDB();
+
     function showToast(message, type = "success") {
       const container = document.getElementById("toast-container");
       const toast = document.createElement("div");
@@ -441,9 +441,6 @@
         .slice(0, 3);
     }
 
-    // ==========================================
-    // 4. AUTH & JOIN REQUEST HANDLERS
-    // ==========================================
     function switchAuthTab(tab) {
       authTab = tab;
       render();
@@ -454,19 +451,17 @@
       const id = document.getElementById("login-id").value.trim();
       const pass = document.getElementById("login-pass").value.trim();
 
-      // 1. Admin Login Check
       if (id === ADMIN_ID && pass === ADMIN_PASS) {
         currentUser = {
           role: "admin",
           data: { name: "ليدر تيم برينكس", academicId: ADMIN_ID }
         };
         activeTab = "requests";
-        showToast("أهلاً بك يا قائد تيم BrainX! تم فتح لوحة التحكم.", "success");
+        showToast("أهلاً بك يا قائد تيم BrainX! تم فتح لوحة التحكم السحابية.", "success");
         render();
         return;
       }
 
-      // 2. Member Login Check
       const foundUser = dbState.users.find(u => u.academicId === id && u.password === pass);
       if (!foundUser) {
         showToast("الرقم الأكاديمي أو كلمة المرور غير صحيحة!", "error");
@@ -493,7 +488,6 @@
         currentUser = { role: "member", data: foundUser };
         activeTab = "my_tasks";
         render();
-        // Personalized Welcome Modal upon login
         openModal(`
           <div class="text-center py-3 relative overflow-hidden">
             <div class="flex justify-center mb-4 animate-float">
@@ -581,7 +575,7 @@
       saveState();
 
       authTab = "login";
-      showToast("تم إرسال طلب انضمامك بنجاح! طلبك الآن قيد مراجعة الليدر.", "success");
+      showToast("تم إرسال طلب انضمامك بنجاح للسحابة! طلبك الآن قيد مراجعة الليدر.", "success");
       render();
     }
 
@@ -590,9 +584,6 @@
       render();
     }
 
-    // ==========================================
-    // 5. ADMIN DASHBOARD ACTIONS
-    // ==========================================
     function setAdminTab(tab) {
       activeTab = tab;
       render();
@@ -610,7 +601,7 @@
       user.score = 30;
       user.scoreLogs = [{ delta: +30, reason: "نقاط الترحيب والانضمام الرسمي لتيم BrainX", date: "الآن" }];
       saveState();
-      showToast(`تم قبول ${user.name} في تيم BrainX بنجاح!`, "success");
+      showToast(`تم قبول ${user.name} في تيم BrainX بنجاح وحفظه سحابياً!`, "success");
     }
 
     function rejectMember(academicId) {
@@ -666,7 +657,7 @@
         goals: goalsRaw ? goalsRaw.split("\n").map(s => s.trim()).filter(Boolean) : []
       };
       saveState();
-      showToast("تم تحديث تفاصيل المشروع ونشرها لجميع الأعضاء!", "success");
+      showToast("تم تحديث تفاصيل المشروع وحفظها سحابياً لجميع الأعضاء!", "success");
     }
 
     function assignNewTask(e) {
@@ -768,1106 +759,711 @@
                 <span class="px-3 py-1 rounded-lg bg-obsidian-950 border border-gold-500/30 text-xs font-bold text-gold-300">
                   التقييم: <span class="font-mono text-sm">${user.score} / 60</span>
                 </span>
-                <span class="px-3 py-1 rounded-lg bg-obsidian-950 border border-zinc-700 text-xs text-zinc-300">
-                  التاسكات المسندة: <strong class="text-white">${userTasks.length}</strong>
+                <span class="px-3 py-1 rounded-lg bg-obsidian-950 border border-zinc-800 text-xs text-zinc-300">
+                  تاريخ الانضمام: ${user.joinedAt}
                 </span>
-                ${user.portfolio ? `<a href="${user.portfolio}" target="_blank" rel="noopener noreferrer" class="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-gold-500/15 text-gold-300 hover:bg-gold-500/25 text-xs font-bold transition"><i data-lucide="external-link" class="w-3.5 h-3.5"></i> البورتفوليو / CV</a>` : ''}
               </div>
             </div>
-            <button onclick="closeModal()" class="p-2 rounded-lg bg-obsidian-800 text-zinc-400 hover:text-white">
-              <i data-lucide="x" class="w-5 h-5"></i>
-            </button>
           </div>
 
           <div class="py-5 space-y-4">
             <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-gold-400 mb-1.5">السيرة الذاتية والنبذة (Bio & CV)</h4>
-              <p class="text-sm text-zinc-300 bg-obsidian-950/90 p-3.5 rounded-xl border border-zinc-800 leading-relaxed">${user.bio}</p>
+              <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">نبذة تعريفية</h4>
+              <p class="text-sm text-zinc-200 leading-relaxed bg-obsidian-950/60 p-3 rounded-xl border border-zinc-800/80">${user.bio}</p>
             </div>
             <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-gold-400 mb-1.5">المهارات التقنية (Skills)</h4>
-              <div class="flex flex-wrap gap-2">
-                ${user.skills.split(",").map(sk => `<span class="px-3 py-1 rounded-lg bg-obsidian-800 border border-gold-500/20 text-xs font-mono text-zinc-200">${sk.trim()}</span>`).join("")}
+              <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">المهارات التقنية</h4>
+              <div class="flex flex-wrap gap-1.5">
+                ${user.skills.split(',').map(s => `<span class="px-2.5 py-1 rounded-md bg-gold-500/10 text-gold-300 border border-gold-500/20 text-xs font-semibold">${s.trim()}</span>`).join('')}
               </div>
             </div>
+            ${user.portfolio ? `
+              <div>
+                <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-1">رابط المعرض / GitHub</h4>
+                <a href="${user.portfolio}" target="_blank" class="text-xs font-mono text-gold-400 hover:underline flex items-center gap-1.5">
+                  <i data-lucide="external-link" class="w-3.5 h-3.5"></i> ${user.portfolio}
+                </a>
+              </div>
+            ` : ''}
+
             <div>
-              <h4 class="text-xs font-bold uppercase tracking-wider text-gold-400 mb-2">سجل التقييمات (Points History Log)</h4>
-              <div class="max-h-40 overflow-y-auto space-y-2 pr-1">
-                ${user.scoreLogs.length ? user.scoreLogs.map(log => `
-                  <div class="flex items-center justify-between text-xs bg-obsidian-950/80 px-3 py-2 rounded-lg border border-zinc-800/80">
+              <h4 class="text-xs font-bold text-zinc-400 uppercase tracking-wider mb-2">مهام العضو (${userTasks.length})</h4>
+              <div class="space-y-2 max-h-40 overflow-y-auto pr-1">
+                ${userTasks.length === 0 ? '<p class="text-xs text-zinc-500 italic">لا توجد مهام مسندة حالياً.</p>' : userTasks.map(t => `
+                  <div class="p-3 rounded-xl bg-obsidian-950 border border-zinc-800 text-xs flex items-center justify-between">
                     <div>
-                      <span class="text-zinc-200 block">${log.reason}</span>
-                      <span class="text-[10px] text-zinc-500">${log.date}</span>
+                      <p class="font-bold text-zinc-200 mb-0.5">${t.title}</p>
+                      <span class="text-zinc-400">الموعد: ${t.deadline}</span>
                     </div>
-                    <span class="font-mono font-bold ${log.delta >= 0 ? 'text-emerald-400' : 'text-red-400'}">${log.delta >= 0 ? '+' + log.delta : log.delta}</span>
+                    ${getTaskStatusBadge(t.status)}
                   </div>
-                `).join("") : '<p class="text-xs text-zinc-500">لا يوجد سجل نقاط بعد.</p>'}
+                `).join('')}
               </div>
             </div>
+          </div>
+
+          <div class="pt-4 border-t border-gold-500/20 flex justify-end">
+            <button onclick="closeModal()" class="gold-btn px-6 py-2 rounded-xl text-xs">إغلاق</button>
           </div>
         </div>
       `);
     }
 
-    // ==========================================
-    // 6. MEMBER DASHBOARD ACTIONS
-    // ==========================================
-    function setMemberTab(tab) {
-      activeTab = tab;
-      render();
-    }
-
-    function updateMyTaskStatus(taskId, newStatus) {
-      const task = dbState.tasks.find(t => t.id === taskId && t.memberId === currentUser.data.academicId);
-      if (!task) return;
-      task.status = newStatus;
-      saveState();
-      showToast("تم تحديث حالة التاسك بنجاح!", "success");
-    }
-
-    function submitTaskWork(e, taskId) {
+    // Member submission action
+    function submitTaskByMember(e, taskId) {
       e.preventDefault();
-      const task = dbState.tasks.find(t => t.id === taskId && t.memberId === currentUser.data.academicId);
-      if (!task) return;
       const link = document.getElementById(`sub-link-${taskId}`).value.trim();
       const note = document.getElementById(`sub-note-${taskId}`).value.trim();
 
+      const task = dbState.tasks.find(t => t.id === taskId);
+      if (!task) return;
+
+      task.status = "تم التسليم";
       task.submissionLink = link;
       task.submissionNote = note;
-      task.status = "تم التسليم";
+
       saveState();
-      showToast("تم تسليم شغلك وإرساله لليدر التيم بنجاح! 🎉", "success");
-    }
-
-    function handleMemberAvatarChange(input) {
-      if (input.files && input.files[0]) {
-        const reader = new FileReader();
-        reader.onload = function(e) {
-          const user = dbState.users.find(u => u.academicId === currentUser.data.academicId);
-          if (user) {
-            user.avatar = e.target.result;
-            currentUser.data.avatar = e.target.result;
-            saveState();
-            showToast("تم تحديث صورتك الشخصية بنجاح!", "success");
-          }
-        };
-        reader.readAsDataURL(input.files[0]);
-      }
-    }
-
-    function saveMyProfile(e) {
-      e.preventDefault();
-      const user = dbState.users.find(u => u.academicId === currentUser.data.academicId);
-      if (!user) return;
-
-      user.workMode = document.getElementById("prof-workmode").value;
-      user.skills = document.getElementById("prof-skills").value.trim();
-      user.bio = document.getElementById("prof-bio").value.trim();
-      user.portfolio = document.getElementById("prof-portfolio").value.trim();
-
-      currentUser.data = user;
-      saveState();
-      showToast("تم حفظ تحديثات ملفك الشخصي والسيرة الذاتية!", "success");
+      showToast("تم تسليم التاسك بنجاح! سيطالع الليدر تقريرك الآن.", "success");
     }
 
     // ==========================================
-    // 7. AUTHENTICATION SCREEN (NO CREDENTIALS EXPOSED)
+    // 6. MAIN RENDER ENGINE
     // ==========================================
-    function renderAuthScreen() {
-      return `
-        <div class="min-h-screen flex flex-col justify-between p-4 md:p-8">
-          <!-- Top Brand Header -->
-          <header class="max-w-6xl w-full mx-auto flex items-center justify-between py-2">
-            <div class="flex items-center gap-3.5">
-              ${getBrainXLogo(48)}
-              <div>
-                <h1 class="text-xl md:text-2xl font-black tracking-tight font-mono gold-text-gradient">BRAINX TEAM</h1>
-                <p class="text-[11px] text-zinc-400">Innovation • Robotics • Software Engineering</p>
-              </div>
-            </div>
-            <div class="hidden sm:flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-obsidian-900/90 border border-gold-500/25 text-xs text-gold-300">
-              <span class="w-2 h-2 rounded-full bg-gold-400 animate-pulse"></span>
-              البوابة الرسمية لإدارة التيم
-            </div>
-          </header>
+    function render() {
+      const app = document.getElementById("app");
+      const top3 = getTopLeaderboard();
 
-          <!-- Main Auth Content -->
-          <main class="max-w-5xl w-full mx-auto my-8 grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
-            <!-- Left Luxury Branding -->
-            <div class="lg:col-span-5 space-y-6 text-center lg:text-right">
-              <div class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-gold-500/10 border border-gold-500/30 text-gold-300 text-xs font-bold">
-                <i data-lucide="sparkles" class="w-3.5 h-3.5"></i>
-                منصة إدارة المشاريع والتقييم الذكي
+      // If not logged in -> Auth Screen (Login / Join Request)
+      if (!currentUser) {
+        app.innerHTML = `
+          <div class="min-h-screen flex flex-col items-center justify-center p-4 sm:p-6">
+            <div class="w-full max-w-md animate-enter">
+              
+              <!-- Brand Header -->
+              <div class="text-center mb-8">
+                <div class="inline-flex items-center justify-center w-20 h-20 rounded-2xl glass-card border border-gold-500/40 shadow-gold-glow mb-4 animate-float">
+                  ${getBrainXLogo(54)}
+                </div>
+                <h1 class="text-3xl sm:text-4xl font-black text-white tracking-tight mb-2">
+                  BrainX <span class="gold-text-gradient">Team</span>
+                </h1>
+                <p class="text-zinc-400 text-sm">بوابة إدارة الفريق، المشاريع التقنية والمهام السحابية</p>
               </div>
-              <h2 class="text-3xl md:text-5xl font-black leading-tight text-white">
-                نصنع المستقبل في <span class="gold-text-gradient block mt-1.5">BrainX Team</span>
-              </h2>
-              <p class="text-zinc-400 text-sm md:text-base leading-relaxed">
-                منصة متكاملة لأعضاء وقادة تيم برينكس لمتابعة المهام الهندسية، إدارة تفاصيل المشروع، وتقييم الأداء الاحترافي بدقة وشفافية.
-              </p>
 
-              <!-- Feature Highlights Pills -->
-              <div class="grid grid-cols-3 gap-3 pt-2">
-                <div class="glass-card rounded-2xl p-3 text-center">
-                  <i data-lucide="code-2" class="w-5 h-5 text-gold-400 mx-auto mb-1"></i>
-                  <span class="text-xs font-bold text-white block">Software</span>
-                </div>
-                <div class="glass-card rounded-2xl p-3 text-center">
-                  <i data-lucide="cpu" class="w-5 h-5 text-gold-400 mx-auto mb-1"></i>
-                  <span class="text-xs font-bold text-white block">Hardware</span>
-                </div>
-                <div class="glass-card rounded-2xl p-3 text-center">
-                  <i data-lucide="award" class="w-5 h-5 text-gold-400 mx-auto mb-1"></i>
-                  <span class="text-xs font-bold text-white block">60-Pt System</span>
-                </div>
-              </div>
-            </div>
-
-            <!-- Right Form Card -->
-            <div class="lg:col-span-7">
-              <div class="glass-card rounded-3xl p-6 md:p-8 shadow-gold-glow border border-gold-500/30">
+              <!-- Auth Card Container -->
+              <div class="glass-card rounded-3xl p-6 sm:p-8 border border-gold-500/30 shadow-gold-strong relative overflow-hidden">
+                
                 <!-- Tabs Switcher -->
-                <div class="grid grid-cols-2 gap-2 p-1.5 rounded-2xl bg-obsidian-950 border border-zinc-800 mb-6">
-                  <button onclick="switchAuthTab('login')" class="py-2.5 px-4 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${authTab === 'login' ? 'gold-btn shadow-md' : 'text-zinc-400 hover:text-white'}">
-                    <i data-lucide="log-in" class="w-4 h-4"></i>
+                <div class="flex rounded-2xl bg-obsidian-950 p-1.5 border border-gold-500/20 mb-6">
+                  <button onclick="switchAuthTab('login')" class="flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${authTab === 'login' ? 'gold-btn shadow-md text-obsidian-950' : 'text-zinc-400 hover:text-white'}">
                     تسجيل الدخول
                   </button>
-                  <button onclick="switchAuthTab('join')" class="py-2.5 px-4 rounded-xl text-sm font-bold transition flex items-center justify-center gap-2 ${authTab === 'join' ? 'gold-btn shadow-md' : 'text-zinc-400 hover:text-white'}">
-                    <i data-lucide="user-plus" class="w-4 h-4"></i>
-                    طلب انضمام للتيم
+                  <button onclick="switchAuthTab('join')" class="flex-1 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition-all ${authTab === 'join' ? 'gold-btn shadow-md text-obsidian-950' : 'text-zinc-400 hover:text-white'}">
+                    انضم إلينا (Join)
                   </button>
                 </div>
 
                 ${authTab === 'login' ? `
-                  <!-- CLEAN LOGIN FORM -->
-                  <form onsubmit="handleLogin(event)" class="space-y-5 animate-enter">
+                  <!-- LOGIN FORM -->
+                  <form onsubmit="handleLogin(event)" class="space-y-4">
                     <div>
-                      <label class="block text-xs font-bold text-gold-300 mb-2">الرقم الأكاديمي (Academic ID)</label>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1.5">الرقم الأكاديمي</label>
                       <div class="relative">
-                        <i data-lucide="id-card" class="w-5 h-5 text-gold-500/70 absolute right-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input id="login-id" type="text" required placeholder="أدخل الرقم الأكاديمي الخاص بك..." class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl py-3.5 pr-11 pl-4 text-white font-mono text-sm outline-none transition" />
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-zinc-500 pointer-events-none">
+                          <i data-lucide="user" class="w-4 h-4"></i>
+                        </span>
+                        <input type="text" id="login-id" required placeholder="مثال: 2520734" class="w-full pr-10 pl-4 py-3 rounded-xl bg-obsidian-950 border border-zinc-800 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-gold-500 font-mono transition" />
                       </div>
                     </div>
 
                     <div>
-                      <label class="block text-xs font-bold text-gold-300 mb-2">كلمة المرور (Password)</label>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1.5">كلمة المرور</label>
                       <div class="relative">
-                        <i data-lucide="lock" class="w-5 h-5 text-gold-500/70 absolute right-3.5 top-1/2 -translate-y-1/2"></i>
-                        <input id="login-pass" type="password" required placeholder="••••••••••••" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl py-3.5 pr-11 pl-4 text-white font-mono text-sm outline-none transition" />
+                        <span class="absolute inset-y-0 right-0 flex items-center pr-3.5 text-zinc-500 pointer-events-none">
+                          <i data-lucide="lock" class="w-4 h-4"></i>
+                        </span>
+                        <input type="password" id="login-pass" required placeholder="••••••••" class="w-full pr-10 pl-4 py-3 rounded-xl bg-obsidian-950 border border-zinc-800 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-gold-500 font-mono transition" />
                       </div>
                     </div>
 
-                    <button type="submit" class="w-full gold-btn py-3.5 rounded-xl text-base flex items-center justify-center gap-2 mt-2">
-                      <span>دخول إلى المنصة</span>
-                      <i data-lucide="arrow-left" class="w-5 h-5"></i>
+                    <button type="submit" class="w-full gold-btn py-3.5 rounded-xl text-sm sm:text-base shadow-gold-glow mt-2 flex items-center justify-center gap-2">
+                      <i data-lucide="log-in" class="w-4 h-4"></i> تسجيل الدخول للمنظومة
                     </button>
                   </form>
                 ` : `
                   <!-- JOIN REQUEST FORM -->
-                  <form onsubmit="handleJoinRequest(event)" class="space-y-4 animate-enter">
-                    <!-- Avatar Upload Preview -->
-                    <div class="flex items-center gap-4 p-3.5 rounded-2xl bg-obsidian-950/90 border border-zinc-800">
-                      <img id="join-avatar-img" src="${joinAvatarPreview || 'https://api.dicebear.com/9.x/avataaars/svg?seed=BrainXMember&backgroundColor=18181f'}" class="w-16 h-16 rounded-2xl object-cover border-2 border-gold-500/50 bg-obsidian-900 shrink-0" />
-                      <div class="flex-1">
-                        <label class="block text-xs font-bold text-gold-300 mb-1">الصورة الشخصية (Profile Photo)</label>
-                        <p class="text-[11px] text-zinc-400 mb-2">ارفع صورتك الشخصية لتظهر في ملفك وبطاقة العضوية</p>
-                        <label class="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-obsidian-800 hover:bg-obsidian-700 border border-gold-500/30 text-xs font-bold text-gold-300 cursor-pointer transition">
-                          <i data-lucide="camera" class="w-3.5 h-3.5"></i>
-                          اختيار صورة
-                          <input type="file" accept="image/*" onchange="handleAvatarUpload(this)" class="hidden" />
-                        </label>
-                      </div>
+                  <form onsubmit="handleJoinRequest(event)" class="space-y-3.5 max-h-[420px] overflow-y-auto pr-1">
+                    <div>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1">الاسم الكامل</label>
+                      <input type="text" id="join-name" required placeholder="مثال: يوسف عمرو" class="w-full px-4 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-gold-500 transition" />
                     </div>
 
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                       <div>
-                        <label class="block text-xs font-bold text-zinc-300 mb-1.5">الاسم بالكامل *</label>
-                        <input id="join-name" type="text" required placeholder="مثال: محمد أحمد علي" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none" />
+                        <label class="block text-xs font-bold text-zinc-300 mb-1">الرقم الأكاديمي</label>
+                        <input type="text" id="join-id" required placeholder="2520..." class="w-full px-4 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-gold-500 font-mono transition" />
                       </div>
                       <div>
-                        <label class="block text-xs font-bold text-zinc-300 mb-1.5">الرقم الأكاديمي *</label>
-                        <input id="join-id" type="text" required placeholder="مثال: 2520450" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono outline-none" />
+                        <label class="block text-xs font-bold text-zinc-300 mb-1">كلمة المرور</label>
+                        <input type="password" id="join-pass" required placeholder="••••••" class="w-full px-4 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white placeholder-zinc-600 text-sm focus:outline-none focus:border-gold-500 font-mono transition" />
                       </div>
                     </div>
 
                     <div>
-                      <label class="block text-xs font-bold text-zinc-300 mb-1.5">كلمة المرور الخاصة بك *</label>
-                      <input id="join-pass" type="password" required placeholder="اختر كلمة مرور قوية لحسابك" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none" />
-                    </div>
-
-                    <!-- Work Track Selection: Software / Hardware / Both -->
-                    <div>
-                      <label class="block text-xs font-bold text-gold-300 mb-2">نظام الشغل والتخصص داخل التيم *</label>
-                      <div class="grid grid-cols-3 gap-2.5">
-                        <label class="cursor-pointer">
-                          <input type="radio" name="workMode" value="Software" checked class="peer hidden" />
-                          <div class="p-3 rounded-xl bg-obsidian-950 border border-zinc-800 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 text-center transition">
-                            <i data-lucide="code-2" class="w-5 h-5 mx-auto mb-1 text-sky-400"></i>
-                            <div class="text-xs font-bold text-white">Software</div>
-                            <div class="text-[10px] text-zinc-400">سوفت وير</div>
-                          </div>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1.5">تخصصك الرئيسي في التيم</label>
+                      <div class="grid grid-cols-3 gap-2">
+                        <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-obsidian-950 border border-zinc-800 cursor-pointer hover:border-gold-500/50 text-xs font-bold text-zinc-300">
+                          <input type="radio" name="workMode" value="Software" checked class="accent-amber-500" /> Software
                         </label>
-                        <label class="cursor-pointer">
-                          <input type="radio" name="workMode" value="Hardware" class="peer hidden" />
-                          <div class="p-3 rounded-xl bg-obsidian-950 border border-zinc-800 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 text-center transition">
-                            <i data-lucide="cpu" class="w-5 h-5 mx-auto mb-1 text-emerald-400"></i>
-                            <div class="text-xs font-bold text-white">Hardware</div>
-                            <div class="text-[10px] text-zinc-400">هاردوير</div>
-                          </div>
+                        <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-obsidian-950 border border-zinc-800 cursor-pointer hover:border-gold-500/50 text-xs font-bold text-zinc-300">
+                          <input type="radio" name="workMode" value="Hardware" class="accent-amber-500" /> Hardware
                         </label>
-                        <label class="cursor-pointer">
-                          <input type="radio" name="workMode" value="Both" class="peer hidden" />
-                          <div class="p-3 rounded-xl bg-obsidian-950 border border-zinc-800 peer-checked:border-gold-500 peer-checked:bg-gold-500/10 text-center transition">
-                            <i data-lucide="layers" class="w-5 h-5 mx-auto mb-1 text-gold-400"></i>
-                            <div class="text-xs font-bold text-white">Both</div>
-                            <div class="text-[10px] text-zinc-400">الاتنين مع بعض</div>
-                          </div>
+                        <label class="flex items-center justify-center gap-1.5 p-2 rounded-xl bg-obsidian-950 border border-zinc-800 cursor-pointer hover:border-gold-500/50 text-xs font-bold text-zinc-300">
+                          <input type="radio" name="workMode" value="Both" class="accent-amber-500" /> Both
                         </label>
-                      </div>
-                    </div>
-
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                      <div>
-                        <label class="block text-xs font-bold text-zinc-300 mb-1.5">المهارات (Skills)</label>
-                        <input id="join-skills" type="text" placeholder="C++, Python, Arduino, React..." class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none" />
-                      </div>
-                      <div>
-                        <label class="block text-xs font-bold text-zinc-300 mb-1.5">رابط GitHub / LinkedIn (اختياري)</label>
-                        <input id="join-portfolio" type="url" placeholder="https://..." class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono outline-none" />
                       </div>
                     </div>
 
                     <div>
-                      <label class="block text-xs font-bold text-zinc-300 mb-1.5">السيرة الذاتية المختصرة (Bio & CV) *</label>
-                      <textarea id="join-bio" rows="2" required placeholder="اكتب نبذة عن خبراتك السابقة ومهاراتك..." class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2 text-sm text-white outline-none resize-none"></textarea>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1">المهارات التقنية (مفصولة بفاصلة)</label>
+                      <input type="text" id="join-skills" required placeholder="Python, Arduino, UI/UX..." class="w-full px-4 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-gold-500 transition" />
                     </div>
 
-                    <button type="submit" class="w-full gold-btn py-3 rounded-xl text-sm flex items-center justify-center gap-2">
-                      <i data-lucide="send" class="w-4 h-4"></i>
-                      إرسال طلب الانضمام للمراجعة
+                    <div>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1">نبذة تعريفية مختصرة عنك</label>
+                      <textarea id="join-bio" rows="2" placeholder="اكتب نبذة عن خبرتك أو شغفك..." class="w-full px-4 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-gold-500 transition resize-none"></textarea>
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1">رابط معرض الأعمال أو GitHub (اختياري)</label>
+                      <input type="url" id="join-portfolio" placeholder="https://github.com/..." class="w-full px-4 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-gold-500 font-mono transition" />
+                    </div>
+
+                    <div>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1">صورة شخصية (اختياري)</label>
+                      <div class="flex items-center gap-3">
+                        <img id="join-avatar-img" src="https://api.dicebear.com/9.x/avataaars/svg?seed=newMember&backgroundColor=18181f" class="w-12 h-12 rounded-xl object-cover border border-gold-500/40 bg-obsidian-950 shrink-0" />
+                        <input type="file" accept="image/*" onchange="handleAvatarUpload(this)" class="w-full text-xs text-zinc-400 file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-obsidian-800 file:text-gold-300 hover:file:bg-obsidian-700 cursor-pointer" />
+                      </div>
+                    </div>
+
+                    <button type="submit" class="w-full gold-btn py-3 rounded-xl text-sm shadow-gold-glow mt-3 flex items-center justify-center gap-2">
+                      <i data-lucide="send" class="w-4 h-4"></i> إرسال طلب الانضمام للسحابة
                     </button>
                   </form>
                 `}
               </div>
-            </div>
-          </main>
 
-          <footer class="text-center text-xs text-zinc-500 py-3">
-            © 2026 <span class="text-gold-400 font-mono font-bold">BrainX Team</span> — Engineered for Excellence
-          </footer>
-        </div>
-      `;
-    }
-
-    // ==========================================
-    // 8. ADMIN DASHBOARD VIEW
-    // ==========================================
-    function renderAdminDashboard() {
-      const pendingUsers = dbState.users.filter(u => u.status === "pending");
-      const approvedUsers = dbState.users.filter(u => u.status === "approved");
-      const filteredMembers = memberFilter === "ALL"
-        ? approvedUsers
-        : approvedUsers.filter(u => u.workMode === memberFilter);
-      const completionRate = dbState.project.progress ?? 0;
-      const top3 = getTopLeaderboard();
-
-      return `
-        <!-- Top Header -->
-        <nav class="sticky top-0 z-30 bg-obsidian-950/90 backdrop-blur-xl border-b border-gold-500/20">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-              ${getBrainXLogo(42)}
-              <div>
-                <div class="flex items-center gap-2">
-                  <span class="font-mono font-black text-lg gold-text-gradient">BRAINX TEAM</span>
-                  <span class="px-2.5 py-0.5 rounded-md text-[10px] font-bold bg-gold-500/20 text-gold-300 border border-gold-500/40">ADMIN PANEL</span>
-                </div>
-                <p class="text-[11px] text-zinc-400">لوحة تحكم القائد وإدارة المشروع</p>
+              <div class="text-center mt-6 text-xs text-zinc-500">
+                BrainX Portal &copy; 2026 - Secured via Supabase Cloud
               </div>
             </div>
+          </div>
+        `;
+        if (window.lucide) lucide.createIcons();
+        return;
+      }
 
-            <div class="flex items-center gap-3">
-              <div class="hidden md:flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-obsidian-900 border border-zinc-800 text-xs">
-                <span class="text-zinc-400">نسبة إنجاز المشروع:</span>
-                <span class="font-mono font-bold text-gold-400">${completionRate}%</span>
-              </div>
-              <button onclick="logout()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold transition">
-                <i data-lucide="log-out" class="w-4 h-4"></i>
-                خروج
+      // Render Dashboard Header & Main Layout
+      const isAdmin = currentUser.role === "admin";
+      const user = currentUser.data;
+
+      app.innerHTML = `
+        <!-- Navbar -->
+        <header class="glass-card border-b border-gold-500/20 sticky top-0 z-30 px-4 sm:px-8 py-3.5 flex items-center justify-between">
+          <div class="flex items-center gap-3">
+            <div class="w-10 h-10 rounded-xl glass-card border border-gold-500/40 flex items-center justify-center shadow-gold-glow">
+              ${getBrainXLogo(32)}
+            </div>
+            <div>
+              <h2 class="text-base sm:text-lg font-black text-white tracking-wide flex items-center gap-2">
+                BrainX Team
+                <span class="px-2 py-0.5 rounded-full text-[10px] font-bold ${isAdmin ? 'bg-gold-500/20 text-gold-300 border border-gold-500/40' : 'bg-sky-500/20 text-sky-300 border border-sky-500/40'}">
+                  ${isAdmin ? 'لوحة الليدر' : 'بوابة العضو'}
+                </span>
+              </h2>
+              <p class="text-[11px] text-zinc-400">متصل سحابياً بـ Supabase</p>
+            </div>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <div class="hidden sm:flex items-center gap-2.5 px-3 py-1.5 rounded-xl bg-obsidian-950 border border-gold-500/25">
+              <span class="text-xs font-bold text-zinc-200">${user.name}</span>
+              <span class="text-[11px] font-mono text-gold-400">(${isAdmin ? 'Admin' : user.academicId})</span>
+            </div>
+            <button onclick="logout()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-300 border border-red-500/30 text-xs font-bold transition">
+              <i data-lucide="log-out" class="w-4 h-4"></i> خروج
+            </button>
+          </div>
+        </header>
+
+        <!-- Main Body Content -->
+        <main class="flex-1 max-w-7xl w-full mx-auto p-4 sm:p-6 lg:p-8 space-y-6">
+
+          ${isAdmin ? `
+            <!-- ================= ADMIN TABS ================= -->
+            <div class="flex flex-wrap items-center gap-2 border-b border-gold-500/20 pb-4">
+              <button onclick="setAdminTab('requests')" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'requests' ? 'gold-btn shadow-gold-glow text-obsidian-950' : 'bg-obsidian-900 text-zinc-300 border border-zinc-800 hover:border-gold-500/40'}">
+                <i data-lucide="user-check" class="w-4 h-4"></i> طلبات الانضمام (${dbState.users.filter(u => u.status === 'pending').length})
+              </button>
+              <button onclick="setAdminTab('members')" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'members' ? 'gold-btn shadow-gold-glow text-obsidian-950' : 'bg-obsidian-900 text-zinc-300 border border-zinc-800 hover:border-gold-500/40'}">
+                <i data-lucide="users" class="w-4 h-4"></i> أعضاء التيم (${dbState.users.filter(u => u.status === 'approved').length})
+              </button>
+              <button onclick="setAdminTab('tasks')" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'tasks' ? 'gold-btn shadow-gold-glow text-obsidian-950' : 'bg-obsidian-900 text-zinc-300 border border-zinc-800 hover:border-gold-500/40'}">
+                <i data-lucide="check-square" class="w-4 h-4"></i> إسناد ومتابعة المهام (${dbState.tasks.length})
+              </button>
+              <button onclick="setAdminTab('project')" class="flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'project' ? 'gold-btn shadow-gold-glow text-obsidian-950' : 'bg-obsidian-900 text-zinc-300 border border-zinc-800 hover:border-gold-500/40'}">
+                <i data-lucide="layout" class="w-4 h-4"></i> تفاصيل المشروع
               </button>
             </div>
-          </div>
-        </nav>
 
-        <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 flex-1">
-          <!-- KPI Summary Cards -->
-          <div class="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
-              <div>
-                <p class="text-xs text-zinc-400 mb-1">أعضاء التيم المعتمدين</p>
-                <p class="text-2xl font-black font-mono text-white">${approvedUsers.length}</p>
-              </div>
-              <div class="w-11 h-11 rounded-xl bg-sky-500/15 text-sky-400 flex items-center justify-center">
-                <i data-lucide="users" class="w-5 h-5"></i>
-              </div>
-            </div>
-
-            <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
-              <div>
-                <p class="text-xs text-zinc-400 mb-1">طلبات الانضمام</p>
-                <p class="text-2xl font-black font-mono text-gold-400">${pendingUsers.length}</p>
-              </div>
-              <div class="w-11 h-11 rounded-xl bg-gold-500/15 text-gold-400 flex items-center justify-center">
-                <i data-lucide="user-plus" class="w-5 h-5"></i>
-              </div>
-            </div>
-
-            <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
-              <div>
-                <p class="text-xs text-zinc-400 mb-1">التاسكات النشطة</p>
-                <p class="text-2xl font-black font-mono text-white">${dbState.tasks.length}</p>
-              </div>
-              <div class="w-11 h-11 rounded-xl bg-purple-500/15 text-purple-400 flex items-center justify-center">
-                <i data-lucide="list-checks" class="w-5 h-5"></i>
-              </div>
-            </div>
-
-            <div class="glass-card rounded-2xl p-4 flex items-center justify-between">
-              <div>
-                <p class="text-xs text-zinc-400 mb-1">تقدم المشروع العام</p>
-                <p class="text-2xl font-black font-mono text-emerald-400">${completionRate}%</p>
-              </div>
-              <div class="w-11 h-11 rounded-xl bg-emerald-500/15 text-emerald-400 flex items-center justify-center">
-                <i data-lucide="trending-up" class="w-5 h-5"></i>
-              </div>
-            </div>
-          </div>
-
-          <!-- Admin Navigation Tabs -->
-          <div class="flex items-center gap-2 overflow-x-auto pb-1">
-            <button onclick="setAdminTab('requests')" class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'requests' ? 'gold-btn' : 'glass-card text-zinc-300 hover:text-white'}">
-              <i data-lucide="inbox" class="w-4 h-4"></i>
-              طلبات الانضمام
-              ${pendingUsers.length ? `<span class="px-2 py-0.5 rounded-full text-[11px] font-mono ${activeTab === 'requests' ? 'bg-obsidian-950 text-gold-400' : 'bg-gold-500 text-obsidian-950'}">${pendingUsers.length}</span>` : ''}
-            </button>
-
-            <button onclick="setAdminTab('project')" class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'project' ? 'gold-btn' : 'glass-card text-zinc-300 hover:text-white'}">
-              <i data-lucide="folder-kanban" class="w-4 h-4"></i>
-              تفاصيل المشروع
-            </button>
-
-            <button onclick="setAdminTab('members')" class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'members' ? 'gold-btn' : 'glass-card text-zinc-300 hover:text-white'}">
-              <i data-lucide="users" class="w-4 h-4"></i>
-              أعضاء التيم
-            </button>
-
-            <button onclick="setAdminTab('tasks')" class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'tasks' ? 'gold-btn' : 'glass-card text-zinc-300 hover:text-white'}">
-              <i data-lucide="clipboard-list" class="w-4 h-4"></i>
-              إدارة التاسكات
-            </button>
-
-            <button onclick="setAdminTab('evaluation')" class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'evaluation' ? 'gold-btn' : 'glass-card text-zinc-300 hover:text-white'}">
-              <i data-lucide="award" class="w-4 h-4"></i>
-              التقييم ولوحة الشرف
-            </button>
-          </div>
-
-          <!-- TAB A: JOIN REQUESTS -->
-          ${activeTab === 'requests' ? `
-            <section class="space-y-4 animate-enter">
-              <div class="flex items-center justify-between">
-                <h2 class="text-lg font-extrabold text-white flex items-center gap-2">
-                  <i data-lucide="user-check" class="w-5 h-5 text-gold-400"></i>
-                  طلبات الانضمام المعلقة (${pendingUsers.length})
-                </h2>
-              </div>
-
-              ${pendingUsers.length === 0 ? `
-                <div class="glass-card rounded-2xl p-12 text-center">
-                  <i data-lucide="check-circle-2" class="w-12 h-12 text-gold-500/40 mx-auto mb-3"></i>
-                  <h3 class="text-base font-bold text-white mb-1">لا توجد طلبات انضمام معلقة حالياً</h3>
-                  <p class="text-xs text-zinc-400">أي طالب جديد يسجل من واجهة الدخول سيظهر طلبه هنا للمراجعة.</p>
+            <!-- TAB 1: PENDING REQUESTS -->
+            ${activeTab === 'requests' ? `
+              <div class="space-y-4 animate-enter">
+                <div class="flex items-center justify-between">
+                  <h3 class="text-xl font-black text-white flex items-center gap-2">
+                    <i data-lucide="user-plus" class="w-5 h-5 text-gold-400"></i> طلبات الانضمام المعلقة
+                  </h3>
+                  <span class="px-3 py-1 rounded-full bg-gold-500/15 text-gold-300 border border-gold-500/30 text-xs font-mono font-bold">
+                    ${dbState.users.filter(u => u.status === 'pending').length} طلب بانتظار الموافقة
+                  </span>
                 </div>
-              ` : `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  ${pendingUsers.map(req => `
-                    <div class="glass-card glass-card-hover rounded-2xl p-5 flex flex-col justify-between gap-4">
-                      <div>
-                        <div class="flex items-start justify-between gap-3 mb-3">
-                          <div class="flex items-center gap-3.5">
-                            <img src="${req.avatar}" class="w-14 h-14 rounded-2xl object-cover border border-gold-500/40 bg-obsidian-950" />
-                            <div>
-                              <h3 class="font-bold text-base text-white">${req.name}</h3>
-                              <p class="text-xs font-mono text-gold-400">ID: ${req.academicId}</p>
+
+                ${dbState.users.filter(u => u.status === 'pending').length === 0 ? `
+                  <div class="glass-card rounded-2xl p-12 text-center border border-zinc-800">
+                    <div class="w-16 h-16 rounded-full bg-obsidian-950 border border-zinc-800 flex items-center justify-center mx-auto mb-4 text-zinc-500">
+                      <i data-lucide="check-circle" class="w-8 h-8"></i>
+                    </div>
+                    <h4 class="text-lg font-bold text-white mb-1">لا توجد طلبات انضمام معلقة</h4>
+                    <p class="text-sm text-zinc-400">جميع الطلبات تمت مراجعتها مسبقاً.</p>
+                  </div>
+                ` : `
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${dbState.users.filter(u => u.status === 'pending').map(applicant => `
+                      <div class="glass-card rounded-2xl p-5 border border-gold-500/25 flex flex-col justify-between gap-4">
+                        <div class="flex items-start gap-4">
+                          <img src="${applicant.avatar}" class="w-14 h-14 rounded-2xl object-cover border border-gold-500/40 bg-obsidian-950 shrink-0" />
+                          <div class="flex-1">
+                            <div class="flex items-center justify-between mb-1">
+                              <h4 class="text-base font-bold text-white">${applicant.name}</h4>
+                              ${getWorkModeBadge(applicant.workMode)}
+                            </div>
+                            <p class="text-xs font-mono text-gold-400 mb-2">ID: ${applicant.academicId}</p>
+                            <p class="text-xs text-zinc-300 leading-relaxed bg-obsidian-950/80 p-2.5 rounded-xl border border-zinc-800 mb-2">${applicant.bio}</p>
+                            <div class="flex flex-wrap gap-1">
+                              ${applicant.skills.split(',').map(s => `<span class="px-2 py-0.5 rounded bg-obsidian-950 text-zinc-300 text-[10px] border border-zinc-800">${s.trim()}</span>`).join('')}
                             </div>
                           </div>
-                          ${getWorkModeBadge(req.workMode)}
                         </div>
-
-                        <p class="text-xs text-zinc-300 bg-obsidian-950/80 p-3 rounded-xl border border-zinc-800/80 leading-relaxed mb-3">
-                          ${req.bio}
-                        </p>
-
-                        <div class="flex flex-wrap items-center gap-1.5 mb-2">
-                          ${req.skills.split(",").map(s => `<span class="px-2.5 py-0.5 rounded-md bg-obsidian-800 text-[11px] font-mono text-zinc-300">${s.trim()}</span>`).join("")}
+                        <div class="flex items-center justify-end gap-2.5 pt-3 border-t border-zinc-800/80">
+                          <button onclick="approveMember('${applicant.academicId}')" class="flex-1 gold-btn py-2.5 rounded-xl text-xs flex items-center justify-center gap-1.5 shadow-gold-glow">
+                            <i data-lucide="check" class="w-4 h-4"></i> قبول الانضمام
+                          </button>
+                          <button onclick="rejectMember('${applicant.academicId}')" class="px-4 py-2.5 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold transition flex items-center justify-center gap-1.5">
+                            <i data-lucide="x" class="w-4 h-4"></i> رفض
+                          </button>
                         </div>
-                        ${req.portfolio ? `<a href="${req.portfolio}" target="_blank" class="inline-flex items-center gap-1 text-xs text-gold-400 hover:underline"><i data-lucide="link" class="w-3.5 h-3.5"></i> عرض البورتفوليو / CV</a>` : ''}
                       </div>
-
-                      <div class="grid grid-cols-2 gap-3 pt-3 border-t border-zinc-800">
-                        <button onclick="approveMember('${req.academicId}')" class="py-2.5 px-4 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-xs flex items-center justify-center gap-1.5 transition">
-                          <i data-lucide="check" class="w-4 h-4"></i>
-                          قبول في التيم
-                        </button>
-                        <button onclick="rejectMember('${req.academicId}')" class="py-2.5 px-4 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-400 border border-red-500/30 font-bold text-xs flex items-center justify-center gap-1.5 transition">
-                          <i data-lucide="x" class="w-4 h-4"></i>
-                          رفض الطلب
-                        </button>
-                      </div>
-                    </div>
-                  `).join("")}
-                </div>
-              `}
-            </section>
-          ` : ''}
-
-          <!-- TAB B: PROJECT DETAILS -->
-          ${activeTab === 'project' ? `
-            <section class="glass-card rounded-2xl p-6 md:p-8 animate-enter">
-              <div class="flex items-center gap-2.5 mb-6">
-                <div class="w-10 h-10 rounded-xl bg-gold-500/15 text-gold-400 flex items-center justify-center">
-                  <i data-lucide="rocket" class="w-5 h-5"></i>
-                </div>
-                <div>
-                  <h2 class="text-lg font-extrabold text-white">إدارة تفاصيل مشروع التيم</h2>
-                  <p class="text-xs text-zinc-400">أي تعديل تحفظه هنا سيظهر فوراً في لوحة تحكم جميع أعضاء التيم</p>
-                </div>
+                    `).join('')}
+                  </div>
+                `}
               </div>
+            ` : ''}
 
-              <form onsubmit="saveProjectDetails(event)" class="space-y-5">
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
-                  <div class="md:col-span-2">
-                    <label class="block text-xs font-bold text-gold-300 mb-1.5">اسم المشروع (Project Title)</label>
-                    <input id="proj-title" type="text" required value="${dbState.project.title}" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-4 py-3 text-sm text-white outline-none" />
-                  </div>
-                  <div>
-                    <label class="block text-xs font-bold text-gold-300 mb-1.5">الموعد النهائي (Deadline)</label>
-                    <input id="proj-deadline" type="date" required value="${dbState.project.deadline}" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-4 py-3 text-sm text-white font-mono outline-none" />
-                  </div>
-                  <div>
-                    <label class="block text-xs font-bold text-gold-300 mb-1.5">نسبة الإنجاز (%)</label>
-                    <input id="proj-progress" type="number" min="0" max="100" required value="${dbState.project.progress}" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-4 py-3 text-sm text-white font-mono outline-none" />
-                  </div>
-                </div>
-
-                <div>
-                  <label class="block text-xs font-bold text-gold-300 mb-1.5">وصف وفكرة المشروع (Project Overview)</label>
-                  <textarea id="proj-desc" rows="3" required class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-4 py-3 text-sm text-white outline-none">${dbState.project.description}</textarea>
-                </div>
-
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs font-bold text-gold-300 mb-1.5">الأهداف الرئيسية (كل هدف في سطر جديد)</label>
-                    <textarea id="proj-goals" rows="4" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-4 py-3 text-sm text-white outline-none">${dbState.project.goals.join("\n")}</textarea>
-                  </div>
-                  <div>
-                    <label class="block text-xs font-bold text-gold-300 mb-1.5">التقنيات والأدوات المستخدمة (افصل بفاصلة ,)</label>
-                    <textarea id="proj-tech" rows="4" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-4 py-3 text-sm text-white font-mono outline-none">${dbState.project.techStack.join(", ")}</textarea>
+            <!-- TAB 2: MEMBERS MANAGEMENT & SCOREBOARD -->
+            ${activeTab === 'members' ? `
+              <div class="space-y-5 animate-enter">
+                <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <h3 class="text-xl font-black text-white flex items-center gap-2">
+                    <i data-lucide="users" class="w-5 h-5 text-gold-400"></i> أعضاء تيم BrainX المعتمدين
+                  </h3>
+                  <!-- Filter buttons -->
+                  <div class="flex items-center gap-1.5 bg-obsidian-900 p-1 rounded-xl border border-gold-500/20 text-xs">
+                    <button onclick="setMemberFilter('ALL')" class="px-3 py-1.5 rounded-lg font-bold transition ${memberFilter === 'ALL' ? 'bg-gold-500 text-obsidian-950' : 'text-zinc-400 hover:text-white'}">الكل</button>
+                    <button onclick="setMemberFilter('Software')" class="px-3 py-1.5 rounded-lg font-bold transition ${memberFilter === 'Software' ? 'bg-gold-500 text-obsidian-950' : 'text-zinc-400 hover:text-white'}">Software</button>
+                    <button onclick="setMemberFilter('Hardware')" class="px-3 py-1.5 rounded-lg font-bold transition ${memberFilter === 'Hardware' ? 'bg-gold-500 text-obsidian-950' : 'text-zinc-400 hover:text-white'}">Hardware</button>
+                    <button onclick="setMemberFilter('Both')" class="px-3 py-1.5 rounded-lg font-bold transition ${memberFilter === 'Both' ? 'bg-gold-500 text-obsidian-950' : 'text-zinc-400 hover:text-white'}">Both</button>
                   </div>
                 </div>
 
-                <div class="flex justify-end">
-                  <button type="submit" class="gold-btn px-7 py-3 rounded-xl text-sm flex items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i>
-                    حفظ ونشر تفاصيل المشروع
-                  </button>
-                </div>
-              </form>
-            </section>
-          ` : ''}
-
-          <!-- TAB C: MEMBERS MANAGEMENT -->
-          ${activeTab === 'members' ? `
-            <section class="space-y-5 animate-enter">
-              <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <h2 class="text-lg font-extrabold text-white">أعضاء تيم BrainX (${filteredMembers.length})</h2>
-                <!-- Work Mode Filter -->
-                <div class="flex items-center gap-1.5 bg-obsidian-950 p-1 rounded-xl border border-zinc-800 self-start">
-                  ${['ALL', 'Software', 'Hardware', 'Both'].map(f => `
-                    <button onclick="setMemberFilter('${f}')" class="px-3 py-1.5 rounded-lg text-xs font-bold transition ${memberFilter === f ? 'gold-btn' : 'text-zinc-400 hover:text-white'}">
-                      ${f === 'ALL' ? 'الكل' : f}
-                    </button>
-                  `).join("")}
-                </div>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-                ${filteredMembers.map(m => `
-                  <div class="glass-card glass-card-hover rounded-2xl p-5 flex flex-col justify-between">
-                    <div>
-                      <div class="flex items-center gap-3.5 mb-4">
-                        <img src="${m.avatar}" class="w-14 h-14 rounded-2xl object-cover border border-gold-500/40 bg-obsidian-950" />
-                        <div class="min-w-0 flex-1">
-                          <h3 class="font-bold text-white truncate">${m.name}</h3>
-                          <p class="text-xs font-mono text-gold-400 mb-1">ID: ${m.academicId}</p>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  ${dbState.users.filter(u => u.status === 'approved' && (memberFilter === 'ALL' || u.workMode === memberFilter)).map(m => `
+                    <div class="glass-card rounded-2xl p-5 border border-gold-500/25 flex flex-col justify-between gap-4 glass-card-hover">
+                      <div>
+                        <div class="flex items-start justify-between gap-3 mb-3">
+                          <div class="flex items-center gap-3">
+                            <img src="${m.avatar}" class="w-12 h-12 rounded-xl object-cover border border-gold-500/40 bg-obsidian-950 shrink-0" />
+                            <div>
+                              <h4 class="text-base font-bold text-white">${m.name}</h4>
+                              <span class="text-[11px] font-mono text-gold-400">${m.academicId}</span>
+                            </div>
+                          </div>
                           ${getWorkModeBadge(m.workMode)}
                         </div>
+
+                        <!-- Score Progress Bar from 60 -->
+                        <div class="bg-obsidian-950 p-3 rounded-xl border border-zinc-800 mb-3">
+                          <div class="flex items-center justify-between text-xs mb-1.5">
+                            <span class="text-zinc-400 font-bold">تقييم العضو:</span>
+                            <span class="font-mono font-black text-gold-400 text-sm">${m.score} <span class="text-zinc-500 text-xs">/ 60</span></span>
+                          </div>
+                          <div class="w-full h-2 rounded-full bg-obsidian-900 overflow-hidden">
+                            <div class="h-full bg-gradient-to-r from-amber-600 via-gold-500 to-yellow-300 rounded-full transition-all duration-500" style="width: ${(m.score / 60) * 100}%"></div>
+                          </div>
+                        </div>
+
+                        <!-- Score Adjuster Controls -->
+                        <div class="space-y-2 bg-obsidian-950/60 p-2.5 rounded-xl border border-zinc-800/80 mb-3">
+                          <input type="text" id="reason-${m.academicId}" placeholder="سبب التعديل (اختياري)..." class="w-full px-3 py-1.5 rounded-lg bg-obsidian-900 border border-zinc-800 text-zinc-200 text-xs focus:outline-none focus:border-gold-500" />
+                          <div class="flex items-center gap-1.5">
+                            <button onclick="adjustMemberScore('${m.academicId}', 5)" class="flex-1 py-1 rounded-lg bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 text-xs font-bold transition">+5 درجات</button>
+                            <button onclick="adjustMemberScore('${m.academicId}', -5)" class="flex-1 py-1 rounded-lg bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/30 text-xs font-bold transition">-5 درجات</button>
+                            <div class="flex items-center gap-1">
+                              <input type="number" id="custom-score-${m.academicId}" min="0" max="60" value="${m.score}" class="w-14 py-1 px-1.5 rounded-lg bg-obsidian-900 border border-zinc-800 text-center font-mono text-xs text-gold-400 focus:outline-none focus:border-gold-500" />
+                              <button onclick="applyCustomScore('${m.academicId}')" class="px-2.5 py-1 rounded-lg bg-gold-500 text-obsidian-950 font-bold text-xs hover:bg-gold-400 transition">تحديد</button>
+                            </div>
+                          </div>
+                        </div>
                       </div>
 
-                      <p class="text-xs text-zinc-400 line-clamp-2 mb-4">${m.bio}</p>
-                    </div>
-
-                    <div class="pt-3 border-t border-zinc-800/80 flex items-center justify-between">
-                      <div class="text-xs">
-                        <span class="text-zinc-400">التقييم:</span>
-                        <span class="font-mono font-bold text-gold-400 mr-1">${m.score} / 60</span>
-                      </div>
-                      <div class="flex items-center gap-2">
-                        <button onclick="viewMemberProfileModal('${m.academicId}')" class="px-3 py-1.5 rounded-lg bg-gold-500/15 hover:bg-gold-500/25 text-gold-300 text-xs font-bold transition">
-                          عرض البروفايل والـ CV
+                      <div class="flex items-center justify-between pt-2 border-t border-zinc-800/80">
+                        <button onclick="viewMemberProfileModal('${m.academicId}')" class="text-xs font-bold text-gold-400 hover:underline flex items-center gap-1">
+                          <i data-lucide="eye" class="w-3.5 h-3.5"></i> الملف الكامل
                         </button>
-                        <button onclick="removeMember('${m.academicId}')" title="إزالة العضو" class="p-1.5 rounded-lg bg-red-500/10 hover:bg-red-500/20 text-red-400 transition">
-                          <i data-lucide="trash-2" class="w-4 h-4"></i>
+                        <button onclick="removeMember('${m.academicId}')" class="text-xs font-bold text-red-400 hover:text-red-300 flex items-center gap-1">
+                          <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> إزالة
                         </button>
                       </div>
                     </div>
-                  </div>
-                `).join("")}
+                  `).join('')}
+                </div>
               </div>
-            </section>
-          ` : ''}
+            ` : ''}
 
-          <!-- TAB D: TASKS MANAGEMENT -->
-          ${activeTab === 'tasks' ? `
-            <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-enter">
-              <!-- Assign Private Task Form -->
-              <div class="lg:col-span-5">
-                <div class="glass-card rounded-2xl p-6 sticky top-24">
-                  <h2 class="text-base font-extrabold text-white mb-4 flex items-center gap-2">
-                    <i data-lucide="plus-circle" class="w-5 h-5 text-gold-400"></i>
-                    إسناد تاسك خاص لطالب
-                  </h2>
-                  <form onsubmit="assignNewTask(event)" class="space-y-4">
+            <!-- TAB 3: TASKS ASSIGNMENT & TRACKING -->
+            ${activeTab === 'tasks' ? `
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 animate-enter">
+                
+                <!-- Assign Task Column -->
+                <div class="glass-card rounded-2xl p-5 border border-gold-500/30 h-fit">
+                  <h3 class="text-lg font-black text-white mb-4 flex items-center gap-2">
+                    <i data-lucide="plus-circle" class="w-5 h-5 text-gold-400"></i> إسناد تاسك جديد لعضو
+                  </h3>
+                  <form onsubmit="assignNewTask(event)" class="space-y-3.5">
                     <div>
-                      <label class="block text-xs font-bold text-gold-300 mb-1.5">اختر العضو (يظهر التاسك عنده فقط)</label>
-                      <select id="task-member" required class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
-                        ${approvedUsers.map(u => `<option value="${u.academicId}">${u.name} (${u.workMode}) - ${u.academicId}</option>`).join("")}
+                      <label class="block text-xs font-bold text-zinc-300 mb-1">اختر العضو</label>
+                      <select id="task-member" required class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-gold-500 transition">
+                        <option value="">-- اختر عضواً --</option>
+                        ${dbState.users.filter(u => u.status === 'approved').map(u => `
+                          <option value="${u.academicId}">${u.name} (${u.workMode})</option>
+                        `).join('')}
                       </select>
                     </div>
 
                     <div>
-                      <label class="block text-xs font-bold text-zinc-300 mb-1.5">عنوان التاسك *</label>
-                      <input id="task-title" type="text" required placeholder="مثال: برمجة حساس الحركة..." class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none" />
+                      <label class="block text-xs font-bold text-zinc-300 mb-1">عنوان التاسك</label>
+                      <input type="text" id="task-title" required placeholder="مثال: تطوير وحدة الاتصال..." class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-gold-500 transition" />
                     </div>
 
                     <div>
-                      <label class="block text-xs font-bold text-zinc-300 mb-1.5">التفاصيل والمطلوب تنفيذه *</label>
-                      <textarea id="task-desc" rows="3" required placeholder="اشرح خطوات التاسك المطلوبة بوضوح..." class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none resize-none"></textarea>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1">تفاصيل التاسك</label>
+                      <textarea id="task-desc" rows="3" required placeholder="شرح تفصيلي للمطلوب..." class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-gold-500 transition resize-none"></textarea>
                     </div>
 
                     <div class="grid grid-cols-2 gap-3">
                       <div>
-                        <label class="block text-xs font-bold text-zinc-300 mb-1.5">آخر موعد (Deadline)</label>
-                        <input id="task-deadline" type="date" required value="2026-12-01" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3 py-2 text-xs text-white font-mono outline-none" />
+                        <label class="block text-xs font-bold text-zinc-300 mb-1">الموعد النهائي</label>
+                        <input type="date" id="task-deadline" required class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-gold-500 font-mono transition" />
                       </div>
                       <div>
-                        <label class="block text-xs font-bold text-zinc-300 mb-1.5">الأولوية</label>
-                        <select id="task-priority" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3 py-2 text-xs text-white outline-none">
-                          <option value="عاجل">🔥 عاجل</option>
-                          <option value="متوسط">⚡ متوسط</option>
-                          <option value="عادي">📌 عادي</option>
+                        <label class="block text-xs font-bold text-zinc-300 mb-1">الأولوية</label>
+                        <select id="task-priority" class="w-full px-3.5 py-2.5 rounded-xl bg-obsidian-950 border border-zinc-800 text-white text-xs focus:outline-none focus:border-gold-500 transition">
+                          <option value="عاجل">عاجل (High)</option>
+                          <option value="متوسط" selected>متوسط (Medium)</option>
+                          <option value="عادي">عادي (Normal)</option>
                         </select>
                       </div>
                     </div>
 
-                    <button type="submit" class="w-full gold-btn py-3 rounded-xl text-sm flex items-center justify-center gap-2">
-                      <i data-lucide="send" class="w-4 h-4"></i>
-                      إرسال التاسك للعضو
+                    <button type="submit" class="w-full gold-btn py-3 rounded-xl text-xs shadow-gold-glow mt-2 flex items-center justify-center gap-1.5">
+                      <i data-lucide="send" class="w-4 h-4"></i> إرسال التاسك للعضو
                     </button>
                   </form>
                 </div>
-              </div>
 
-              <!-- All Tasks List -->
-              <div class="lg:col-span-7 space-y-4">
-                <h2 class="text-base font-extrabold text-white flex items-center justify-between">
-                  <span>قائمة التاسكات الموزعة (${dbState.tasks.length})</span>
-                  <span class="text-xs font-normal text-zinc-400">كل عضو يرى تاسكاته فقط</span>
-                </h2>
+                <!-- All Tasks Tracking List -->
+                <div class="lg:col-span-2 space-y-4">
+                  <h3 class="text-xl font-black text-white flex items-center gap-2">
+                    <i data-lucide="list-todo" class="w-5 h-5 text-gold-400"></i> متابعة كافة مهام التيم (${dbState.tasks.length})
+                  </h3>
 
-                ${dbState.tasks.map(task => {
-                  const owner = dbState.users.find(u => u.academicId === task.memberId);
-                  return `
-                    <div class="glass-card rounded-2xl p-5 space-y-3">
-                      <div class="flex items-start justify-between gap-3">
-                        <div>
-                          <div class="flex flex-wrap items-center gap-2 mb-1">
-                            <span class="px-2.5 py-0.5 rounded-md bg-gold-500/15 text-gold-300 text-xs font-bold">
-                              المكلّف: ${owner ? owner.name : task.memberId}
-                            </span>
-                            <span class="text-xs text-zinc-400 font-mono">Deadline: ${task.deadline}</span>
-                          </div>
-                          <h3 class="font-bold text-white text-base">${task.title}</h3>
-                        </div>
-                        <div class="flex items-center gap-2">
-                          ${getTaskStatusBadge(task.status)}
-                          <button onclick="deleteTask('${task.id}')" class="p-1.5 rounded-lg text-zinc-500 hover:text-red-400 hover:bg-red-500/10 transition">
-                            <i data-lucide="trash-2" class="w-4 h-4"></i>
-                          </button>
-                        </div>
-                      </div>
-
-                      <p class="text-xs text-zinc-300 leading-relaxed">${task.description}</p>
-
-                      ${task.submissionLink ? `
-                        <div class="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-xs space-y-1">
-                          <div class="font-bold text-emerald-300 flex items-center gap-1.5">
-                            <i data-lucide="check-circle-2" class="w-4 h-4"></i>
-                            تم التسليم من قِبل العضو:
-                          </div>
-                          <a href="${task.submissionLink}" target="_blank" class="text-gold-300 underline break-all block font-mono">${task.submissionLink}</a>
-                          ${task.submissionNote ? `<p class="text-zinc-300">ملاحظة العضو: ${task.submissionNote}</p>` : ''}
-                        </div>
-                      ` : ''}
+                  ${dbState.tasks.length === 0 ? `
+                    <div class="glass-card rounded-2xl p-10 text-center border border-zinc-800">
+                      <p class="text-zinc-400 text-sm">لا توجد مهام مسندة حالياً.</p>
                     </div>
-                  `;
-                }).join("")}
-              </div>
-            </section>
-          ` : ''}
-
-          <!-- TAB E: 60-POINT EVALUATION & LEADERBOARD -->
-          ${activeTab === 'evaluation' ? `
-            <section class="space-y-6 animate-enter">
-              <!-- Top 3 Leaderboard Podium -->
-              <div class="glass-card rounded-2xl p-5 border border-gold-500/35">
-                <h3 class="text-sm font-extrabold text-gold-400 mb-4 flex items-center gap-2">
-                  <i data-lucide="trophy" class="w-4 h-4"></i>
-                  لوحة الشرف - أبطال BrainX Team (Top 3)
-                </h3>
-                <div class="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-                  ${top3.map((leader, idx) => {
-                    const rankStyles = [
-                      "border-gold-400 bg-gradient-to-b from-gold-500/15 to-obsidian-950 shadow-gold-glow",
-                      "border-zinc-400/50 bg-gradient-to-b from-zinc-400/10 to-obsidian-950",
-                      "border-amber-700/50 bg-gradient-to-b from-amber-700/10 to-obsidian-950"
-                    ];
-                    const badgeStyles = [
-                      "gold-btn",
-                      "bg-zinc-300 text-obsidian-950 font-black",
-                      "bg-amber-700 text-white font-black"
-                    ];
-                    return `
-                      <div class="flex items-center gap-3 p-3.5 rounded-2xl border ${rankStyles[idx] || rankStyles[2]}">
-                        <div class="w-9 h-9 rounded-xl flex items-center justify-center font-mono text-sm ${badgeStyles[idx] || badgeStyles[2]}">
-                          #${idx + 1}
-                        </div>
-                        <img src="${leader.avatar}" class="w-11 h-11 rounded-xl object-cover bg-obsidian-800" />
-                        <div class="min-w-0 flex-1">
-                          <p class="text-xs font-bold text-white truncate">${leader.name}</p>
-                          <p class="text-xs font-mono text-gold-400 font-bold">${leader.score} / 60</p>
-                        </div>
-                      </div>
-                    `;
-                  }).join("")}
-                </div>
-              </div>
-
-              <!-- Individual 60-Point Score Cards -->
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                ${approvedUsers.map(member => {
-                  const pct = Math.round((member.score / 60) * 100);
-                  return `
-                    <div class="glass-card rounded-2xl p-5 space-y-4">
-                      <div class="flex items-center justify-between gap-3">
-                        <div class="flex items-center gap-3">
-                          <img src="${member.avatar}" class="w-12 h-12 rounded-xl object-cover border border-gold-500/30 bg-obsidian-950" />
-                          <div>
-                            <h4 class="font-bold text-white text-sm">${member.name}</h4>
-                            <span class="text-[11px] font-mono text-zinc-400">${member.academicId} • ${member.workMode}</span>
-                          </div>
-                        </div>
-                        <div class="text-left">
-                          <span class="text-2xl font-black font-mono gold-text-gradient">${member.score}</span>
-                          <span class="text-xs font-mono text-zinc-400">/ 60</span>
-                        </div>
-                      </div>
-
-                      <!-- Progress Bar out of 60 -->
-                      <div class="w-full h-2.5 rounded-full bg-obsidian-950 overflow-hidden border border-zinc-800">
-                        <div class="h-full rounded-full bg-gradient-to-l from-gold-300 via-gold-500 to-gold-700 transition-all duration-300" style="width: ${pct}%"></div>
-                      </div>
-
-                      <!-- Reason Input & Quick Adjustment Controls -->
-                      <div class="space-y-2.5 pt-1">
-                        <input id="reason-${member.academicId}" type="text" placeholder="سبب التعديل (مثال: تسليم التاسك في الموعد، تأخير...)" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3 py-2 text-xs text-white outline-none" />
-                        
-                        <div class="grid grid-cols-4 gap-2">
-                          <button onclick="adjustMemberScore('${member.academicId}', 5)" class="py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-mono font-bold text-xs transition">+5</button>
-                          <button onclick="adjustMemberScore('${member.academicId}', 1)" class="py-2 rounded-xl bg-emerald-500/15 hover:bg-emerald-500/25 text-emerald-300 border border-emerald-500/30 font-mono font-bold text-xs transition">+1</button>
-                          <button onclick="adjustMemberScore('${member.academicId}', -1)" class="py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/30 font-mono font-bold text-xs transition">-1</button>
-                          <button onclick="adjustMemberScore('${member.academicId}', -5)" class="py-2 rounded-xl bg-red-500/15 hover:bg-red-500/25 text-red-300 border border-red-500/30 font-mono font-bold text-xs transition">-5</button>
-                        </div>
-
-                        <!-- Direct Custom Score Input (0 - 60) -->
-                        <div class="flex items-center gap-2">
-                          <input id="custom-score-${member.academicId}" type="number" min="0" max="60" placeholder="درجة مخصصة (0-60)" class="flex-1 bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3 py-1.5 text-xs text-white font-mono outline-none" />
-                          <button onclick="applyCustomScore('${member.academicId}')" class="px-3.5 py-1.5 rounded-xl bg-obsidian-800 hover:bg-obsidian-700 border border-gold-500/30 text-gold-300 text-xs font-bold transition">تعيين</button>
-                        </div>
-                      </div>
-
-                      <!-- Expandable Points History Log -->
-                      <details class="pt-2 border-t border-zinc-800/80">
-                        <summary class="text-xs font-bold text-gold-400 cursor-pointer select-none">عرض سجل النقاط (${member.scoreLogs.length})</summary>
-                        <div class="mt-2 max-h-32 overflow-y-auto space-y-1.5 pr-1">
-                          ${member.scoreLogs.length ? member.scoreLogs.map(log => `
-                            <div class="flex items-center justify-between text-[11px] bg-obsidian-950 px-2.5 py-1.5 rounded-lg border border-zinc-800/80">
-                              <span class="text-zinc-300">${log.reason} <span class="text-zinc-500">(${log.date})</span></span>
-                              <span class="font-mono font-bold ${log.delta >= 0 ? 'text-emerald-400' : 'text-red-400'}">${log.delta >= 0 ? '+' + log.delta : log.delta}</span>
+                  ` : `
+                    <div class="space-y-3">
+                      ${dbState.tasks.map(t => {
+                        const assignedUser = dbState.users.find(u => u.academicId === t.memberId);
+                        return `
+                          <div class="glass-card rounded-2xl p-5 border border-gold-500/25 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div class="flex items-start gap-3.5">
+                              <img src="${assignedUser ? assignedUser.avatar : 'https://api.dicebear.com/9.x/avataaars/svg?seed=unknown'}" class="w-12 h-12 rounded-xl object-cover border border-gold-500/30 bg-obsidian-950 shrink-0" />
+                              <div>
+                                <div class="flex items-center gap-2 mb-1">
+                                  <h4 class="text-base font-bold text-white">${t.title}</h4>
+                                  ${getTaskStatusBadge(t.status)}
+                                </div>
+                                <p class="text-xs text-zinc-300 mb-2">${t.description}</p>
+                                <div class="flex flex-wrap items-center gap-3 text-xs text-zinc-400 font-mono">
+                                  <span>المسؤول: <strong class="text-gold-400">${assignedUser ? assignedUser.name : t.memberId}</strong></span>
+                                  <span>الموعد: ${t.deadline}</span>
+                                  <span class="px-2 py-0.5 rounded bg-obsidian-950 border border-zinc-800 text-[11px]">${t.priority}</span>
+                                </div>
+                                ${t.submissionLink ? `
+                                  <div class="mt-2.5 p-2.5 rounded-xl bg-obsidian-950 border border-emerald-500/30 text-xs">
+                                    <p class="text-emerald-400 font-bold mb-0.5">تقرير التسليم:</p>
+                                    <p class="text-zinc-200 mb-1">${t.submissionNote || 'لا توجد ملاحظات'}</p>
+                                    <a href="${t.submissionLink}" target="_blank" class="text-sky-400 hover:underline flex items-center gap-1 font-mono text-[11px]">
+                                      <i data-lucide="external-link" class="w-3.5 h-3.5"></i> ${t.submissionLink}
+                                    </a>
+                                  </div>
+                                ` : ''}
+                              </div>
                             </div>
-                          `).join("") : '<p class="text-[11px] text-zinc-500">لا يوجد سجل بعد.</p>'}
-                        </div>
-                      </details>
+                            <div class="flex sm:flex-col items-center sm:items-end justify-between pt-3 sm:pt-0 border-t sm:border-t-0 border-zinc-800">
+                              <button onclick="deleteTask('${t.id}')" class="text-xs font-bold text-red-400 hover:text-red-300 flex items-center gap-1">
+                                <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> حذف التاسك
+                              </button>
+                            </div>
+                          </div>
+                        `;
+                      }).join('')}
                     </div>
-                  `;
-                }).join("")}
+                  `}
+                </div>
+
               </div>
-            </section>
-          ` : ''}
-        </main>
-      `;
-    }
+            ` : ''}
 
-    // ==========================================
-    // 9. MEMBER DASHBOARD VIEW
-    // ==========================================
-    function renderMemberDashboard() {
-      const me = dbState.users.find(u => u.academicId === currentUser.data.academicId) || currentUser.data;
-      // Strict Private Filtering: Member ONLY sees tasks where task.memberId === currentUser.academicId
-      const myTasks = dbState.tasks.filter(t => t.memberId === me.academicId);
-      const completionRate = dbState.project.progress ?? 0;
-      const scorePct = Math.round((me.score / 60) * 100);
-      const top3 = getTopLeaderboard();
-
-      return `
-        <!-- Top Header -->
-        <nav class="sticky top-0 z-30 bg-obsidian-950/90 backdrop-blur-xl border-b border-gold-500/20">
-          <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3.5 flex items-center justify-between gap-4">
-            <div class="flex items-center gap-3">
-              ${getBrainXLogo(42)}
-              <div>
-                <span class="font-mono font-black text-lg gold-text-gradient block leading-none">BRAINX TEAM</span>
-                <span class="text-[11px] text-zinc-400">بوابة العضو • ${me.workMode}</span>
-              </div>
-            </div>
-
-            <div class="flex items-center gap-3">
-              <div class="hidden sm:flex items-center gap-2.5 bg-obsidian-900 px-3 py-1.5 rounded-xl border border-gold-500/25">
-                <img src="${me.avatar}" class="w-7 h-7 rounded-lg object-cover" />
-                <div class="text-right">
-                  <p class="text-xs font-bold text-white leading-none">${me.name}</p>
-                  <p class="text-[10px] font-mono text-gold-400">${me.score} / 60 pts</p>
-                </div>
-              </div>
-              <button onclick="logout()" class="flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-red-500/10 hover:bg-red-500/20 text-red-400 border border-red-500/30 text-xs font-bold transition">
-                <i data-lucide="log-out" class="w-4 h-4"></i>
-                خروج
-              </button>
-            </div>
-          </div>
-        </nav>
-
-        <main class="max-w-7xl w-full mx-auto px-4 sm:px-6 py-6 space-y-6 flex-1">
-          <!-- Personalized Welcome Banner -->
-          <div class="glass-card rounded-2xl p-5 md:p-6 border border-gold-500/35 bg-gradient-to-l from-gold-500/10 via-obsidian-900/90 to-obsidian-950 flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
-            <div class="flex items-center gap-4">
-              <img src="${me.avatar}" class="w-16 h-16 rounded-2xl object-cover border-2 border-gold-500 shadow-gold-glow bg-obsidian-950 shrink-0" />
-              <div>
-                <div class="flex flex-wrap items-center gap-2 mb-1">
-                  <h1 class="text-lg md:text-xl font-black text-white">أهلاً بك يا <span class="gold-text-gradient">${me.name}</span> في عائلة BrainX Team! 👋</h1>
-                  ${getWorkModeBadge(me.workMode)}
-                </div>
-                <p class="text-xs md:text-sm text-zinc-300">نتمنى لك يوماً مليئاً بالإبداع والإنجاز. تابع تاسكاتك الخاصة وتقييمك من هنا.</p>
-              </div>
-            </div>
-            <div class="flex items-center gap-3 self-end md:self-center">
-              <div class="px-4 py-2 rounded-xl bg-obsidian-950 border border-gold-500/30 text-center">
-                <span class="block text-[10px] text-zinc-400">تقييمك الحالي</span>
-                <span class="font-mono font-black text-lg text-gold-400">${me.score} <span class="text-xs text-zinc-500">/ 60</span></span>
-              </div>
-            </div>
-          </div>
-
-          <!-- Member Tabs -->
-          <div class="flex items-center gap-2 overflow-x-auto pb-1">
-            <button onclick="setMemberTab('my_tasks')" class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'my_tasks' ? 'gold-btn' : 'glass-card text-zinc-300 hover:text-white'}">
-              <i data-lucide="check-square" class="w-4 h-4"></i>
-              مهامي الخاصة (${myTasks.length})
-            </button>
-
-            <button onclick="setMemberTab('project')" class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'project' ? 'gold-btn' : 'glass-card text-zinc-300 hover:text-white'}">
-              <i data-lucide="rocket" class="w-4 h-4"></i>
-              تفاصيل المشروع
-            </button>
-
-            <button onclick="setMemberTab('evaluation')" class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'evaluation' ? 'gold-btn' : 'glass-card text-zinc-300 hover:text-white'}">
-              <i data-lucide="award" class="w-4 h-4"></i>
-              تقييمي ولوحة الشرف
-            </button>
-
-            <button onclick="setMemberTab('profile')" class="shrink-0 flex items-center gap-2 px-4 py-2.5 rounded-xl text-xs sm:text-sm font-bold transition ${activeTab === 'profile' ? 'gold-btn' : 'glass-card text-zinc-300 hover:text-white'}">
-              <i data-lucide="user-cog" class="w-4 h-4"></i>
-              ملفي الشخصي والسيرة الذاتية
-            </button>
-          </div>
-
-          <!-- MEMBER TAB 1: MY PRIVATE TASKS -->
-          ${activeTab === 'my_tasks' ? `
-            <section class="space-y-4 animate-enter">
-              <div class="flex items-center justify-between">
-                <h2 class="text-lg font-extrabold text-white">المهام المطلوبة منك شخصياً</h2>
-                <span class="text-xs text-zinc-400">تظهر لك مهامك الخاصة فقط</span>
-              </div>
-
-              ${myTasks.length === 0 ? `
-                <div class="glass-card rounded-2xl p-12 text-center">
-                  <i data-lucide="coffee" class="w-12 h-12 text-gold-400/50 mx-auto mb-3"></i>
-                  <h3 class="text-base font-bold text-white mb-1">لا توجد مهام مسندة إليك حالياً</h3>
-                  <p class="text-xs text-zinc-400">عندما يرسل لك ليدر التيم تاسك جديد سيظهر هنا فوراً.</p>
-                </div>
-              ` : `
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  ${myTasks.map(task => `
-                    <div class="glass-card glass-card-hover rounded-2xl p-5 flex flex-col justify-between gap-4">
-                      <div>
-                        <div class="flex items-center justify-between gap-2 mb-2">
-                          <span class="px-2.5 py-0.5 rounded-md bg-gold-500/15 text-gold-300 text-xs font-bold">${task.priority}</span>
-                          ${getTaskStatusBadge(task.status)}
-                        </div>
-                        <h3 class="text-base font-extrabold text-white mb-1.5">${task.title}</h3>
-                        <p class="text-xs text-zinc-300 leading-relaxed mb-3">${task.description}</p>
-                        <p class="text-[11px] font-mono text-zinc-400">آخر موعد للتسليم: <span class="text-gold-400">${task.deadline}</span></p>
-                      </div>
-
-                      <!-- Status Quick Toggle & Submission Form -->
-                      <div class="pt-3 border-t border-zinc-800 space-y-3">
-                        <div class="flex items-center gap-2">
-                          <span class="text-xs text-zinc-400">الحالة:</span>
-                          <select onchange="updateMyTaskStatus('${task.id}', this.value)" class="flex-1 bg-obsidian-950 border border-zinc-800 rounded-lg px-2.5 py-1.5 text-xs text-white outline-none">
-                            <option value="قيد التنفيذ" ${task.status === 'قيد التنفيذ' ? 'selected' : ''}>قيد التنفيذ</option>
-                            <option value="تم التسليم" ${task.status === 'تم التسليم' ? 'selected' : ''}>تم التسليم</option>
-                          </select>
-                        </div>
-
-                        <form onsubmit="submitTaskWork(event, '${task.id}')" class="space-y-2 bg-obsidian-950/80 p-3 rounded-xl border border-zinc-800/80">
-                          <label class="block text-[11px] font-bold text-gold-300">تسليم التاسك (رابط GitHub / Google Drive):</label>
-                          <input id="sub-link-${task.id}" type="url" required value="${task.submissionLink || ''}" placeholder="https://github.com/..." class="w-full bg-obsidian-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-white font-mono outline-none" />
-                          <input id="sub-note-${task.id}" type="text" value="${task.submissionNote || ''}" placeholder="ملاحظات التسليم لليدر التيم (اختياري)..." class="w-full bg-obsidian-900 border border-zinc-800 rounded-lg px-3 py-1.5 text-xs text-white outline-none" />
-                          <button type="submit" class="w-full gold-btn py-2 rounded-lg text-xs">
-                            ${task.submissionLink ? 'تحديث رابط التسليم' : 'تسليم التاسك الآن'}
-                          </button>
-                        </form>
-                      </div>
-                    </div>
-                  `).join("")}
-                </div>
-              `}
-            </section>
-          ` : ''}
-
-          <!-- MEMBER TAB 2: PROJECT OVERVIEW -->
-          ${activeTab === 'project' ? `
-            <section class="glass-card rounded-2xl p-6 md:p-8 space-y-6 animate-enter">
-              <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-5 border-b border-gold-500/20">
-                <div>
-                  <span class="text-xs font-bold text-gold-400 block mb-1">المشروع الحالي لتيم BrainX</span>
-                  <h2 class="text-2xl font-black text-white">${dbState.project.title}</h2>
-                </div>
-                <div class="px-4 py-2.5 rounded-xl bg-obsidian-950 border border-gold-500/30 text-xs">
-                  <span class="text-zinc-400 block">الموعد النهائي:</span>
-                  <span class="font-mono font-bold text-gold-400 text-sm">${dbState.project.deadline}</span>
-                </div>
-              </div>
-
-              <!-- Team Progress -->
-              <div>
-                <div class="flex items-center justify-between text-xs mb-2">
-                  <span class="font-bold text-zinc-300">نسبة إنجاز التيم الكلية للمشروع</span>
-                  <span class="font-mono font-bold text-gold-400">${completionRate}%</span>
-                </div>
-                <div class="w-full h-3 rounded-full bg-obsidian-950 border border-zinc-800 overflow-hidden">
-                  <div class="h-full bg-gradient-to-l from-gold-300 via-gold-500 to-gold-700 rounded-full" style="width: ${completionRate}%"></div>
-                </div>
-              </div>
-
-              <div>
-                <h3 class="text-sm font-bold text-gold-300 mb-2">وصف المشروع والرؤية</h3>
-                <p class="text-sm text-zinc-300 leading-relaxed bg-obsidian-950/80 p-4 rounded-xl border border-zinc-800">${dbState.project.description}</p>
-              </div>
-
-              <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <h3 class="text-sm font-bold text-gold-300 mb-3">الأهداف والمراحل المطلوبة</h3>
-                  <ul class="space-y-2.5">
-                    ${dbState.project.goals.map(g => `
-                      <li class="flex items-start gap-2.5 text-xs md:text-sm text-zinc-200 bg-obsidian-950/60 p-3 rounded-xl border border-zinc-800/80">
-                        <i data-lucide="check-circle-2" class="w-4 h-4 text-gold-400 shrink-0 mt-0.5"></i>
-                        <span>${g}</span>
-                      </li>
-                    `).join("")}
-                  </ul>
-                </div>
-
-                <div>
-                  <h3 class="text-sm font-bold text-gold-300 mb-3">التقنيات والأدوات (Tech Stack)</h3>
-                  <div class="flex flex-wrap gap-2">
-                    ${dbState.project.techStack.map(t => `
-                      <span class="px-3.5 py-2 rounded-xl bg-obsidian-950 border border-gold-500/25 font-mono text-xs text-gold-300 font-bold">${t}</span>
-                    `).join("")}
-                  </div>
-                </div>
-              </div>
-            </section>
-          ` : ''}
-
-          <!-- MEMBER TAB 3: EVALUATION (OUT OF 60) & LEADERBOARD -->
-          ${activeTab === 'evaluation' ? `
-            <section class="grid grid-cols-1 lg:grid-cols-12 gap-6 animate-enter">
-              <div class="lg:col-span-7 glass-card rounded-2xl p-6 space-y-5">
-                <div class="flex items-center justify-between">
-                  <div>
-                    <h2 class="text-lg font-extrabold text-white">تقييمك الشخصي في التيم (من 60)</h2>
-                    <p class="text-xs text-zinc-400">يتم تحديث التقييم من قِبل ليدر التيم بناءً على الالتزام وجودة التسليم</p>
-                  </div>
-                  <div class="text-left">
-                    <span class="text-3xl font-black font-mono gold-text-gradient">${me.score}</span>
-                    <span class="text-sm font-mono text-zinc-400">/ 60</span>
-                  </div>
-                </div>
-
-                <div class="w-full h-4 rounded-full bg-obsidian-950 border border-zinc-800 overflow-hidden p-0.5">
-                  <div class="h-full rounded-full bg-gradient-to-l from-gold-300 via-gold-500 to-gold-700" style="width: ${scorePct}%"></div>
-                </div>
-
-                <div>
-                  <h3 class="text-xs font-bold text-gold-400 mb-3">سجل النقاط والأسباب (Points Log)</h3>
-                  <div class="space-y-2.5 max-h-64 overflow-y-auto">
-                    ${me.scoreLogs.length ? me.scoreLogs.map(log => `
-                      <div class="flex items-center justify-between p-3 rounded-xl bg-obsidian-950/90 border border-zinc-800 text-xs">
-                        <div>
-                          <p class="font-bold text-white">${log.reason}</p>
-                          <span class="text-[10px] text-zinc-500">${log.date}</span>
-                        </div>
-                        <span class="px-2.5 py-1 rounded-lg font-mono font-bold ${log.delta >= 0 ? 'bg-emerald-500/15 text-emerald-400' : 'bg-red-500/15 text-red-400'}">
-                          ${log.delta >= 0 ? '+' + log.delta : log.delta} نقطة
-                        </span>
-                      </div>
-                    `).join("") : '<p class="text-xs text-zinc-500">لا يوجد سجل نقاط مسجل حتى الآن.</p>'}
-                  </div>
-                </div>
-              </div>
-
-              <!-- Leaderboard -->
-              <div class="lg:col-span-5 glass-card rounded-2xl p-6 space-y-4">
-                <h3 class="text-base font-extrabold text-gold-400 flex items-center gap-2">
-                  <i data-lucide="trophy" class="w-5 h-5"></i>
-                  لوحة الشرف - أعلى 3 أعضاء في التيم
+            <!-- TAB 4: PROJECT DETAILS & GOALS -->
+            ${activeTab === 'project' ? `
+              <div class="max-w-3xl mx-auto glass-card rounded-3xl p-6 sm:p-8 border border-gold-500/35 shadow-strong animate-enter">
+                <h3 class="text-2xl font-black text-white mb-2 flex items-center gap-2">
+                  <i data-lucide="settings" class="w-6 h-6 text-gold-400"></i> تعديل تفاصيل ومستهدفات المشروع السحابي
                 </h3>
-                <div class="space-y-3">
-                  ${top3.map((leader, i) => `
-                    <div class="flex items-center gap-3.5 p-3.5 rounded-2xl bg-obsidian-950/90 border ${i === 0 ? 'border-gold-400 shadow-gold-glow' : 'border-zinc-800'}">
-                      <div class="w-9 h-9 rounded-xl flex items-center justify-center font-mono font-black text-sm ${i === 0 ? 'gold-btn' : 'bg-obsidian-800 text-gold-400'}">
-                        #${i + 1}
-                      </div>
-                      <img src="${leader.avatar}" class="w-11 h-11 rounded-xl object-cover bg-obsidian-800" />
-                      <div class="min-w-0 flex-1">
-                        <p class="text-sm font-bold text-white truncate">${leader.name}</p>
-                        <p class="text-xs text-zinc-400">${leader.workMode}</p>
-                      </div>
-                      <span class="font-mono font-black text-sm text-gold-400">${leader.score}/60</span>
+                <p class="text-zinc-400 text-sm mb-6">هذه البيانات تظهر في واجهة المشروع لجميع أعضاء التيم فور الحفظ.</p>
+
+                <form onsubmit="saveProjectDetails(event)" class="space-y-4">
+                  <div>
+                    <label class="block text-xs font-bold text-zinc-300 mb-1.5">عنوان المشروع</label>
+                    <input type="text" id="proj-title" value="${dbState.project.title}" required class="w-full px-4 py-3 rounded-xl bg-obsidian-950 border border-zinc-800 text-white text-sm focus:outline-none focus:border-gold-500 transition" />
+                  </div>
+
+                  <div>
+                    <label class="block text-xs font-bold text-zinc-300 mb-1.5">وصف المشروع</label>
+                    <textarea id="proj-desc" rows="3" required class="w-full px-4 py-3 rounded-xl bg-obsidian-950 border border-zinc-800 text-white text-sm focus:outline-none focus:border-gold-500 transition resize-none">${dbState.project.description}</textarea>
+                  </div>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1.5">الموعد النهائي لتسليم المشروع</label>
+                      <input type="date" id="proj-deadline" value="${dbState.project.deadline}" required class="w-full px-4 py-3 rounded-xl bg-obsidian-950 border border-zinc-800 text-white text-sm font-mono focus:outline-none focus:border-gold-500 transition" />
                     </div>
-                  `).join("")}
-                </div>
-              </div>
-            </section>
-          ` : ''}
-
-          <!-- MEMBER TAB 4: PROFILE & CV -->
-          ${activeTab === 'profile' ? `
-            <section class="glass-card rounded-2xl p-6 md:p-8 max-w-3xl mx-auto animate-enter">
-              <div class="flex flex-col sm:flex-row items-center gap-5 pb-6 border-b border-gold-500/20 mb-6">
-                <div class="relative">
-                  <img src="${me.avatar}" class="w-24 h-24 rounded-2xl object-cover border-2 border-gold-500 shadow-gold-glow bg-obsidian-950" />
-                  <label class="absolute -bottom-2 -left-2 p-2 rounded-xl gold-btn cursor-pointer shadow-lg" title="تغيير الصورة الشخصية">
-                    <i data-lucide="camera" class="w-4 h-4"></i>
-                    <input type="file" accept="image/*" onchange="handleMemberAvatarChange(this)" class="hidden" />
-                  </label>
-                </div>
-                <div class="text-center sm:text-right">
-                  <h2 class="text-xl font-black text-white">${me.name}</h2>
-                  <p class="text-xs font-mono text-gold-400 mb-2">Academic ID: ${me.academicId}</p>
-                  ${getWorkModeBadge(me.workMode)}
-                </div>
-              </div>
-
-              <form onsubmit="saveMyProfile(event)" class="space-y-4">
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label class="block text-xs font-bold text-gold-300 mb-1.5">نظام الشغل والتخصص</label>
-                    <select id="prof-workmode" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">
-                      <option value="Software" ${me.workMode === 'Software' ? 'selected' : ''}>Software (سوفت وير)</option>
-                      <option value="Hardware" ${me.workMode === 'Hardware' ? 'selected' : ''}>Hardware (هاردوير)</option>
-                      <option value="Both" ${me.workMode === 'Both' ? 'selected' : ''}>Both (الاتنين مع بعض)</option>
-                    </select>
+                    <div>
+                      <label class="block text-xs font-bold text-zinc-300 mb-1.5">نسبة الإنجاز الكلية (%)</label>
+                      <input type="number" id="proj-progress" min="0" max="100" value="${dbState.project.progress}" required class="w-full px-4 py-3 rounded-xl bg-obsidian-950 border border-zinc-800 text-white text-sm font-mono focus:outline-none focus:border-gold-500 transition" />
+                    </div>
                   </div>
+
                   <div>
-                    <label class="block text-xs font-bold text-gold-300 mb-1.5">رابط البورتفوليو / GitHub / LinkedIn</label>
-                    <input id="prof-portfolio" type="url" value="${me.portfolio || ''}" placeholder="https://..." class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white font-mono outline-none" />
+                    <label class="block text-xs font-bold text-zinc-300 mb-1.5">التقنيات المستخدمة (مفصولة بفاصلة)</label>
+                    <input type="text" id="proj-tech" value="${dbState.project.techStack.join(', ')}" required class="w-full px-4 py-3 rounded-xl bg-obsidian-950 border border-zinc-800 text-white text-xs font-mono focus:outline-none focus:border-gold-500 transition" />
                   </div>
-                </div>
 
-                <div>
-                  <label class="block text-xs font-bold text-gold-300 mb-1.5">المهارات التقنية (Skills)</label>
-                  <input id="prof-skills" type="text" value="${me.skills || ''}" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none" />
-                </div>
+                  <div>
+                    <label class="block text-xs font-bold text-zinc-300 mb-1.5">مستهدفات وأهداف المشروع (كل هدف في سطر)</label>
+                    <textarea id="proj-goals" rows="4" required class="w-full px-4 py-3 rounded-xl bg-obsidian-950 border border-zinc-800 text-white text-xs font-mono focus:outline-none focus:border-gold-500 transition resize-none">${dbState.project.goals.join('\n')}</textarea>
+                  </div>
 
-                <div>
-                  <label class="block text-xs font-bold text-gold-300 mb-1.5">السيرة الذاتية والخبرات (Bio & CV)</label>
-                  <textarea id="prof-bio" rows="4" class="w-full bg-obsidian-950 border border-zinc-800 focus:border-gold-500 rounded-xl px-3.5 py-2.5 text-sm text-white outline-none">${me.bio || ''}</textarea>
-                </div>
-
-                <div class="flex justify-end pt-2">
-                  <button type="submit" class="gold-btn px-7 py-3 rounded-xl text-sm flex items-center gap-2">
-                    <i data-lucide="save" class="w-4 h-4"></i>
-                    حفظ التعديلات على البروفايل
+                  <button type="submit" class="w-full gold-btn py-3.5 rounded-xl text-sm shadow-gold-glow mt-4 flex items-center justify-center gap-2">
+                    <i data-lucide="save" class="w-4 h-4"></i> حفظ التحديثات سحابياً
                   </button>
+                </form>
+              </div>
+            ` : ''}
+
+          ` : `
+            <!-- ================= MEMBER DASHBOARD ================= -->
+            <div class="space-y-6 animate-enter">
+              
+              <!-- Welcome Banner & Leaderboard Podium -->
+              <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                
+                <!-- Welcome Card -->
+                <div class="lg:col-span-2 glass-card rounded-3xl p-6 sm:p-8 border border-gold-500/30 relative overflow-hidden flex flex-col justify-between">
+                  <div class="absolute -left-10 -bottom-10 opacity-10 pointer-events-none">
+                    ${getBrainXLogo(220)}
+                  </div>
+                  <div>
+                    <div class="flex items-center gap-3 mb-4">
+                      <img src="${user.avatar}" class="w-16 h-16 rounded-2xl object-cover border-2 border-gold-500 shadow-gold-glow bg-obsidian-950" />
+                      <div>
+                        <span class="px-3 py-1 rounded-full text-xs font-bold bg-gold-500/15 text-gold-300 border border-gold-500/30 inline-block mb-1">
+                          عضو معتمد في BrainX Team
+                        </span>
+                        <h3 class="text-2xl sm:text-3xl font-black text-white">${user.name}</h3>
+                      </div>
+                    </div>
+                    <p class="text-zinc-300 text-sm leading-relaxed mb-6 max-w-xl">
+                      أهلاً بك يا بطل في منظومة العمل السحابية. تابع مهامك المطلوبة، واطلع على تفاصيل المشروع والمستهدفات المشتركة لتحقيق المركز الأول! 🚀
+                    </p>
+                  </div>
+
+                  <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    <div class="p-3.5 rounded-2xl bg-obsidian-950 border border-gold-500/25">
+                      <span class="block text-xs text-zinc-400 mb-1">تقييمك الحالي</span>
+                      <span class="text-xl font-mono font-black text-gold-400">${user.score} <span class="text-xs text-zinc-500">/ 60</span></span>
+                    </div>
+                    <div class="p-3.5 rounded-2xl bg-obsidian-950 border border-gold-500/25">
+                      <span class="block text-xs text-zinc-400 mb-1">التخصص</span>
+                      <span class="text-sm font-bold text-white">${user.workMode}</span>
+                    </div>
+                    <div class="col-span-2 sm:col-span-1 p-3.5 rounded-2xl bg-obsidian-950 border border-gold-500/25">
+                      <span class="block text-xs text-zinc-400 mb-1">المهام المسندة</span>
+                      <span class="text-xl font-mono font-black text-sky-400">${dbState.tasks.filter(t => t.memberId === user.academicId).length}</span>
+                    </div>
+                  </div>
                 </div>
-              </form>
-            </section>
-          ` : ''}
+
+                <!-- Top 3 Leaderboard Podium -->
+                <div class="glass-card rounded-3xl p-6 border border-gold-500/30 flex flex-col justify-between">
+                  <div>
+                    <h3 class="text-base font-black text-white mb-4 flex items-center gap-2">
+                      <i data-lucide="award" class="w-5 h-5 text-gold-400"></i> لوحة الشرف (Top Members)
+                    </h3>
+                    <div class="space-y-3">
+                      ${top3.map((m, idx) => `
+                        <div class="flex items-center justify-between p-3 rounded-2xl bg-obsidian-950 border border-zinc-800">
+                          <div class="flex items-center gap-3">
+                            <span class="w-6 h-6 rounded-full flex items-center justify-center font-mono text-xs font-bold ${idx === 0 ? 'bg-amber-500 text-obsidian-950' : idx === 1 ? 'bg-zinc-300 text-obsidian-950' : 'bg-amber-700 text-white'}">${idx + 1}</span>
+                            <img src="${m.avatar}" class="w-9 h-9 rounded-xl object-cover border border-gold-500/30" />
+                            <div>
+                              <h4 class="text-xs font-bold text-white">${m.name}</h4>
+                              <span class="text-[10px] text-zinc-400">${m.workMode}</span>
+                            </div>
+                          </div>
+                          <span class="font-mono font-bold text-gold-400 text-xs">${m.score} / 60</span>
+                        </div>
+                      `).join('')}
+                    </div>
+                  </div>
+                  <div class="mt-4 pt-3 border-t border-zinc-800 text-center">
+                    <span class="text-[11px] text-zinc-400">استمر في إنجاز مهامك لترتقي في القمة! ✨</span>
+                  </div>
+                </div>
+
+              </div>
+
+              <!-- Project Overview Card -->
+              <div class="glass-card rounded-3xl p-6 sm:p-8 border border-gold-500/30">
+                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 pb-6 border-b border-zinc-800">
+                  <div>
+                    <span class="px-3 py-1 rounded-full text-xs font-bold bg-gold-500/15 text-gold-300 border border-gold-500/30 inline-block mb-2">المشروع الحالي للتيم</span>
+                    <h3 class="text-2xl font-black text-white">${dbState.project.title}</h3>
+                  </div>
+                  <div class="flex items-center gap-4 bg-obsidian-950 px-4 py-3 rounded-2xl border border-zinc-800">
+                    <div class="text-left">
+                      <span class="block text-xs text-zinc-400">نسبة الإنجاز الكلية</span>
+                      <span class="font-mono font-bold text-gold-400 text-lg">${dbState.project.progress}%</span>
+                    </div>
+                    <div class="w-24 h-2.5 rounded-full bg-obsidian-900 overflow-hidden">
+                      <div class="h-full bg-gradient-to-r from-amber-600 to-gold-400 rounded-full" style="width: ${dbState.project.progress}%"></div>
+                    </div>
+                  </div>
+                </div>
+
+                <div class="py-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <h4 class="text-sm font-bold text-zinc-300 mb-2 flex items-center gap-2">
+                      <i data-lucide="info" class="w-4 h-4 text-gold-400"></i> وصف المشروع
+                    </h4>
+                    <p class="text-sm text-zinc-300 leading-relaxed bg-obsidian-950/60 p-4 rounded-2xl border border-zinc-800">${dbState.project.description}</p>
+                  </div>
+                  <div>
+                    <h4 class="text-sm font-bold text-zinc-300 mb-2 flex items-center gap-2">
+                      <i data-lucide="target" class="w-4 h-4 text-gold-400"></i> مستهدفات الفريق
+                    </h4>
+                    <ul class="space-y-2 bg-obsidian-950/60 p-4 rounded-2xl border border-zinc-800 text-xs text-zinc-300">
+                      ${dbState.project.goals.map(g => `<li class="flex items-start gap-2"><span class="text-gold-400 font-bold">•</span> ${g}</li>`).join('')}
+                    </ul>
+                  </div>
+                </div>
+
+                <div class="pt-4 border-t border-zinc-800 flex flex-wrap items-center justify-between gap-3">
+                  <div class="flex items-center gap-1.5 flex-wrap">
+                    <span class="text-xs font-bold text-zinc-400 mr-2">التقنيات:</span>
+                    ${dbState.project.techStack.map(tech => `<span class="px-3 py-1 rounded-lg bg-obsidian-950 border border-gold-500/25 text-gold-300 text-xs font-mono font-semibold">${tech}</span>`).join('')}
+                  </div>
+                  <span class="text-xs text-zinc-400 font-mono">الموعد النهائي: ${dbState.project.deadline}</span>
+                </div>
+              </div>
+
+              <!-- My Tasks Section -->
+              <div class="space-y-4">
+                <h3 class="text-xl font-black text-white flex items-center gap-2">
+                  <i data-lucide="check-square" class="w-5 h-5 text-gold-400"></i> مهامي المطلوبة (${dbState.tasks.filter(t => t.memberId === user.academicId).length})
+                </h3>
+
+                ${dbState.tasks.filter(t => t.memberId === user.academicId).length === 0 ? `
+                  <div class="glass-card rounded-2xl p-10 text-center border border-zinc-800">
+                    <div class="w-14 h-14 rounded-full bg-obsidian-950 border border-zinc-800 flex items-center justify-center mx-auto mb-3 text-zinc-500">
+                      <i data-lucide="check-circle-2" class="w-7 h-7"></i>
+                    </div>
+                    <h4 class="text-base font-bold text-white mb-1">ليس لديك مهام معلقة حالياً</h4>
+                    <p class="text-xs text-zinc-400">سيقوم الليدر بإسناد مهام جديدة لك قريباً.</p>
+                  </div>
+                ` : `
+                  <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    ${dbState.tasks.filter(t => t.memberId === user.academicId).map(t => `
+                      <div class="glass-card rounded-2xl p-5 border border-gold-500/30 flex flex-col justify-between gap-4">
+                        <div>
+                          <div class="flex items-center justify-between gap-2 mb-2">
+                            <h4 class="text-base font-bold text-white">${t.title}</h4>
+                            ${getTaskStatusBadge(t.status)}
+                          </div>
+                          <p class="text-xs text-zinc-300 leading-relaxed mb-3 bg-obsidian-950 p-3 rounded-xl border border-zinc-800">${t.description}</p>
+                          <div class="flex items-center justify-between text-xs font-mono text-zinc-400 mb-4">
+                            <span>الموعد النهائي: ${t.deadline}</span>
+                            <span class="px-2 py-0.5 rounded bg-obsidian-950 border border-zinc-800">${t.priority}</span>
+                          </div>
+
+                          <!-- Submission Form for Member -->
+                          <form onsubmit="submitTaskByMember(event, '${t.id}')" class="space-y-2.5 bg-obsidian-950/80 p-3.5 rounded-xl border border-zinc-800">
+                            <p class="text-xs font-bold text-gold-300 flex items-center gap-1.5">
+                              <i data-lucide="upload-cloud" class="w-4 h-4"></i> تسليم التاسك لليدر
+                            </p>
+                            <input type="url" id="sub-link-${t.id}" value="${t.submissionLink || ''}" required placeholder="رابط الملف أو GitHub أو Google Drive..." class="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-zinc-800 text-white placeholder-zinc-600 text-xs font-mono focus:outline-none focus:border-gold-500 transition" />
+                            <input type="text" id="sub-note-${t.id}" value="${t.submissionNote || ''}" placeholder="ملاحظات التسليم (اختياري)..." class="w-full px-3 py-2 rounded-lg bg-obsidian-900 border border-zinc-800 text-white placeholder-zinc-600 text-xs focus:outline-none focus:border-gold-500 transition" />
+                            <button type="submit" class="w-full gold-btn py-2 rounded-lg text-xs flex items-center justify-center gap-1 shadow-md">
+                              <i data-lucide="check" class="w-3.5 h-3.5"></i> تأكيد وإرسال التسليم
+                            </button>
+                          </form>
+                        </div>
+                      </div>
+                    `).join('')}
+                  </div>
+                `}
+              </div>
+
+            </div>
+          `}
+
         </main>
       `;
-    }
 
-    // ==========================================
-    // 10. MAIN RENDER LOOP
-    // ==========================================
-    function render() {
-      const appEl = document.getElementById("app");
-      if (!currentUser) {
-        appEl.innerHTML = renderAuthScreen();
-      } else if (currentUser.role === "admin") {
-        appEl.innerHTML = renderAdminDashboard();
-      } else {
-        appEl.innerHTML = renderMemberDashboard();
-      }
       if (window.lucide) lucide.createIcons();
     }
-
-    // Initialize immediately on load
-    window.addEventListener("DOMContentLoaded", () => {
-      render();
-    });
   </script>
 </body>
 </html>
